@@ -7,11 +7,6 @@ import multiprocessing as mp
 from Bio import SeqIO
 import atexit
 
-def cleanup():
-    p1.terminate()
-    for p in idres:
-        p.terminate()
-
 
 def load_ids(file):
 
@@ -26,51 +21,6 @@ def load_ids(file):
     ins.close()
     return idlist
 
-class FastqData(object):
-    def __init__(self, refseq, r):
-        self.refseq = refseq
-        self.readno = r
-        self.sequence = []
-
-    def add_sequence(self, line):
-        self.sequence.append(line)
-
-
-def get_seq(seqarr1, seqarr2, filename, R):
-    inseq = False
-    linecount = 0
-    refseq = ''
-    tmpdict = {}
-    with open(filename) as ins:
-        for line in ins:
-            line = line.rstrip()
-            linecount += 1
-            if linecount%4 == 1:
-                inseq = False
-                id = re.sub("\s.*$","",line)
-                id = re.sub("/\d$","",id)
-                if id in seqarr1:
-                    inseq = True
-                    refseq = seqarr2[seqarr1.index(id)]
-            if (inseq):
-                if refseq not in tmpdict:
-                    tmpdict[refseq] = FastqData(refseq,R)
-                tmpdict[refseq].add_sequence(line)
-    ins.close()
-    array = []
-    for refseq in tmpdict:
-        array.append(tmpdict[refseq])
-    return array
-
-def getseq_worker(f, seqarr1, seqarr2):
-    print f
-    allres = []
-    r1 = get_seq(seqarr1, seqarr2, f+"_R1.fastq", 'R1')
-    r2 = get_seq(seqarr1, seqarr2, f+"_R2.fastq", 'R2')
-    allres.append(r1)
-    allres.append(r2)
-
-    return allres
 
 def assemble (i, id, arr1, args):
     dir = id + "_files"
@@ -129,6 +79,7 @@ def assemble (i, id, arr1, args):
     #count = subprocess.check_output('ls -l ' + passfile + " | awk '{print $5}' ", shell=True)
 
     return [id, os.path.getsize(passfile)]
+
 
 def split_index (args):
     if os.path.exists(args.d):
@@ -207,26 +158,6 @@ if __name__ == "__main__":
                     seqhash[refseq].append(id)
 
 
-        #print seqhash
-
-        # filelist = subprocess.Popen("ls "+args.d+"/seq*_R1.fastq | sed 's/_R1.fastq$//'", shell=True, stdout=subprocess.PIPE)
-        #
-        # testres = [pool.apply_async(getseq_worker, args=(f.rstrip(),seqarr1,seqarr2)) for f in iter(filelist.stdout.readline,'')]
-        # output = [p.get() for p in testres]
-        # #print output
-        #
-        # for layer1 in output:
-        #     #print layer1
-        #     for layer2 in layer1:
-        #         for obj in layer2:
-        #             if obj.refseq not in results:
-        #                 results[obj.refseq] = dict()
-        #             if obj.readno not in results[obj.refseq]:
-        #                 results[obj.refseq][obj.readno] = []
-        #             for l in obj.sequence:
-        #                 results[obj.refseq][obj.readno].append(l)
-
-        #print results
 
         new = dict()
 
@@ -269,13 +200,7 @@ if __name__ == "__main__":
                         ins.write(seq[-args.endsize:] + "\n")
         ins.close()
 
-        # print "At end of iter "+str(i)+" have:"
-        # print "Final:"
-        # print final
-        # print "Last:"
-        # print last
 
-        #break
 
     finalfa = "Final_sequences.fasta"
     for ID in ids:
@@ -283,6 +208,3 @@ if __name__ == "__main__":
             subprocess.call("cat "+ID+"_files/iter"+str(final[ID])+"_cap3_pass.fasta >> "+finalfa, shell=True)
         else:
             subprocess.call("cat "+ID+"_files/iter"+str(args.m)+"_cap3_pass.fasta >> "+finalfa, shell=True)
-
-
-#atexit.register(cleanup)
