@@ -138,7 +138,7 @@ if __name__ == "__main__":
         seqhash = dict()
         refseq = ''
 
-        p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq | parallel -k -j '+str(args.t)+' bwa fastmap {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+        p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq | parallel -k -j '+str(args.t)+' bwa fastmap -w 1 {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
 
         for l in iter(p1.stdout.readline,''):
             l = l.rstrip()
