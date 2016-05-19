@@ -205,6 +205,8 @@ if __name__ == "__main__":
 
 
     finalfa = "Final_sequences.fasta"
+    if os.path.exists(finalfa):
+        subprocess.call("rm "+finalfa, shell=True)
     for ID in ids:
         if ID in final:
             subprocess.call("cat "+ID+"_files/iter"+str(final[ID])+"_cap3_pass.fasta | sed 's/^>/>"+ID+"_/' >> "+finalfa, shell=True)
