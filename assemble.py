@@ -76,7 +76,7 @@ def assemble (i, id, arr1, args):
     subprocess.call('cat ' + soapout + '.scafSeq.cap.contigs ' + soapout + '.scafSeq.cap.singlets > ' + cap3, shell=True)
 
     passfile = dir + "/iter" + str(i) + "_cap3_pass.fasta"
-    subprocess.call("bwa mem " + args.cDNA + " " + cap3 + " | bam2fastx -s -M -Q -a -o " + passfile + " - ", shell=True)
+    subprocess.call('bwa mem ' + args.cDNA + ' ' + cap3 + ' | grep "'+id+'"| bam2fastx -s -M -Q -a -o ' + passfile + ' - ', shell=True)
 
     #count = subprocess.check_output('ls -l ' + passfile + " | awk '{print $5}' ", shell=True)
 
