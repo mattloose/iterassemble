@@ -21,6 +21,29 @@ def load_ids(file):
     ins.close()
     return idlist
 
+def scaffold (i, id, arr1, args):
+    dir = id + "_files"
+
+    f1 = dir + "/final_R1.fastq"
+    f2 = dir + "/final_R2.fastq"
+    fids = dir + "/final_ids.txt"
+
+    with open(fids, 'w') as ins:
+        ins.write("\n".join(arr1))
+    ins.close()
+
+    subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -j 5 -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
+    subprocess.call("ls "+args.d+"/seq*_R2.fastq | parallel -j 5 -k 'cat {} | fqextract "+fids+"' > "+f2, shell=True)
+
+    lib = dir + "/lib.txt"
+    with open(lib, 'w') as ins:
+        ins.write("lib1 bowtie "+f1+' '+f2+' '+str(args.insert)+' 0.25 FR\n')
+    ins.close()
+
+    subprocess.call('SSPACE_Standard_v3.0.pl -l '+lib+' -s '+dir+'/iter'+str(i)+'_cap3_pass.fasta -b '+dir+'/final_SSPACE', shell=True)
+
+
+
 
 def assemble (i, id, arr1, args):
     dir = id + "_files"
@@ -204,13 +227,45 @@ if __name__ == "__main__":
                         ins.write(seq[-args.endsize:] + "\n")
         ins.close()
 
+    for ID in ids:
+        if ID not in final:
+            final[ID] = args.m
 
 
     finalfa = "Final_sequences.fasta"
     if os.path.exists(finalfa):
         subprocess.call("rm "+finalfa, shell=True)
     for ID in ids:
-        if ID in final:
+        #if ID in final:
             subprocess.call("cat "+ID+"_files/iter"+str(final[ID])+"_cap3_pass.fasta | sed 's/^>/>"+ID+"_/' >> "+finalfa, shell=True)
-        else:
-            subprocess.call("cat "+ID+"_files/iter"+str(args.m)+"_cap3_pass.fasta | sed 's/^>/>"+ID+"_/' >> "+finalfa, shell=True)
+        #else:
+        #    subprocess.call("cat "+ID+"_files/iter"+str(args.m)+"_cap3_pass.fasta | sed 's/^>/>"+ID+"_/' >> "+finalfa, shell=True)
+
+
+    seqhash = dict()
+    countref = dict()
+    refseq = ''
+    p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq | parallel -k -j '+str(args.t)+' bwa fastmap -w 1 {} '+finalfa,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+
+    for l in iter(p1.stdout.readline,''):
+        l = l.rstrip()
+        data = l.split("\t")
+        if re.match("SQ", l):
+            refseq = data[1]
+            refseq = re.sub("_.*$","",refseq)
+            if refseq not in countref:
+                countref[refseq] = []
+            countref[refseq].append(data[1])
+        elif re.match("EM", l):
+            for a in range(4,len(data)):
+                id = data[a]
+                if (id == '*'):
+                    next
+                id = re.sub(":.*$","",id)
+                id = re.sub("/\d$","",id)
+                if refseq not in seqhash:
+                    seqhash[refseq] = []
+                seqhash[refseq].append(id)
+
+    scafres = [pool.apply_async(scaffold, args=(final[ID],ID,seqhash[ID],args)) for ID in ids if len(countref[ID]) > 1]
+    scafoutput = [p.get() for p in scafres]
