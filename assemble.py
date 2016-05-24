@@ -32,8 +32,8 @@ def scaffold (i, id, arr1, args):
         ins.write("\n".join(arr1))
     ins.close()
 
-    subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -j 5 -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
-    subprocess.call("ls "+args.d+"/seq*_R2.fastq | parallel -j 5 -k 'cat {} | fqextract "+fids+"' > "+f2, shell=True)
+    subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
+    subprocess.call("ls "+args.d+"/seq*_R2.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f2, shell=True)
 
     lib = dir + "/lib.txt"
     with open(lib, 'w') as ins:
@@ -61,8 +61,8 @@ def assemble (i, id, arr1, args):
     if i > 1:
         subprocess.call("bwa index "+dir+"/iter"+str(i-1)+"_cap3_pass.fasta; bwa mem "+dir+"/iter"+str(i-1)+"_cap3_pass.fasta "+dir+"/iter"+str(i-1)+"_R1.fastq "+dir+"/iter"+str(i-1)+"_R2.fastq | samtools view -F 4 -f 8 - | awk '{print $1}' >> "+fids, shell=True)
 
-    subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -j 5 -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
-    subprocess.call("ls "+args.d+"/seq*_R2.fastq | parallel -j 5 -k 'cat {} | fqextract "+fids+"' > "+f2, shell=True)
+    subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
+    subprocess.call("ls "+args.d+"/seq*_R2.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f2, shell=True)
 
     conf = dir + "/conf.txt"
     with open(conf, 'w') as ins:
