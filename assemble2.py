@@ -182,8 +182,8 @@ if __name__ == "__main__":
                         id = re.sub(":.*$","",id)
                         id = re.sub("/\d$","",id)
                         if refseq not in seqhash:
-                            seqhash[refseq] = []
-                        seqhash[refseq].append(id)
+                            #seqhash[refseq] = []
+                        #seqhash[refseq].append(id)
                         ins.write(id+"\n")
 
         ins.close()
