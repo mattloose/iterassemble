@@ -233,7 +233,7 @@ if __name__ == "__main__":
         subprocess.call('cat ' + soapout + '.scafSeq.cap.contigs ' + soapout + '.scafSeq.cap.singlets > ' + cap3, shell=True)
 
         passfile = "iter" + str(i) + "_cap3_pass.fasta"
-        subprocess.call('bwa mem ' + args.cDNA + ' ' + cap3 + ' | samtools view -F 256 -F 2048 - | awk \'{if (/^\w/){if ($3 != "*"){ print ">" $3 "_" $1 "\n"$10"\n";}}}\' > '+passfile, shell=True)
+        subprocess.call('bwa mem ' + args.cDNA + ' ' + cap3 + ' | samtools view -F 256 -F 2048 - | awk \'{if (/^\w/){if ($3 != "*"){ print ">" $3 "_" $1 "\\n"$10"\\n";}}}\' > '+passfile, shell=True)
 
         ref = "iter" + str(i+1) + "_ref.fasta"
         with open(ref, 'w') as ins:
