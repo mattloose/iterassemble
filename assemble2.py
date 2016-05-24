@@ -163,7 +163,6 @@ if __name__ == "__main__":
     for i in range(1,args.m+1):
 
         fids = 'iter'+str(i)+'_ids.txt'
-        refseq = ''
 
         p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq | parallel -k -j '+str(args.t)+' bwa fastmap -w 1 {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
 
@@ -171,19 +170,13 @@ if __name__ == "__main__":
             for l in iter(p1.stdout.readline,''):
                 l = l.rstrip()
                 data = l.split("\t")
-                if re.match("SQ", l):
-                    refseq = data[1]
-                    refseq = re.sub("_contig.*$","",refseq)
-                elif re.match("EM", l):
+                if re.match("EM", l):
                     for a in range(4,len(data)):
                         id = data[a]
                         if (id == '*'):
                             next
                         id = re.sub(":.*$","",id)
                         id = re.sub("/\d$","",id)
-                        #if refseq not in seqhash:
-                            #seqhash[refseq] = []
-                        #seqhash[refseq].append(id)
                         ins.write(id+"\n")
 
         ins.close()
@@ -220,8 +213,8 @@ if __name__ == "__main__":
         if i > 1:
             #fa = dir + '/iter' + str(i) + '.fasta'
             #subprocess.call('cat '+f1+' '+f2+' | awk \'BEGIN{P=1}{if(P==1||P==2){gsub(/^[@]/,">");print}; if(P==4)P=0; P++}\' > '+fa+ ' ; cap3 '+fa, shell=True)
-            subprocess.call('bwa mem iter'+str(i-1)+'_cap3_pass.fasta '+f1+' '+f2+' > iter'+str(i)+'.sam', shell=True)
-            subprocess.call('grep ">" iter'+str(i-1)+'_cap3_pass.fasta | sed \'s/^>//\' | while read -r line; do egrep "$line\s" iter'+str(i)+'.sam | bam2fastx -a -A -s -Q -o temp.fa - ; if [[ -s temp.fa ]]; then timeout 20m cap3 temp.fa; cat temp.fa.cap.contigs >> ' + soapout + '.scafSeq; fi; done', shell=True)
+            subprocess.call('bwa mem -t '+str(args.t)+' iter'+str(i-1)+'_cap3_pass.fasta '+f1+' '+f2+' > iter'+str(i)+'.sam', shell=True)
+            subprocess.call('grep ">" iter'+str(i-1)+'_cap3_pass.fasta | sed \'s/^>//\' | sed \'s/$/\\\\s/\' | parallel -j '+str(args.t)+' --files sam2fasta.sh {} iter'+str(i)+'.sam | parallel -j '+str(args.t)+'\'timeout 20m cap3 {}; cat {}.cap.contigs >> ' + soapout + '.scafSeq \'', shell=True)
             #subprocess.call('cat ' + dir + '/iter' + str(i-1) + '_cap3_pass.fasta '+fa+'.cap.contigs '+fa+'.cap.singlets >> ' + soapout + '.scafSeq', shell=True)
             #subprocess.call('cat ' + dir + '/iter' + str(i-1) + '_cap3_pass.fasta '+fa+'.cap.contigs >> ' + soapout + '.scafSeq', shell=True)
             subprocess.call('cat iter' + str(i-1) + '_cap3_pass.fasta >> ' + soapout + '.scafSeq', shell=True)
