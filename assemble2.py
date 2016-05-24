@@ -163,28 +163,28 @@ if __name__ == "__main__":
     for i in range(1,args.m+1):
 
         fids = 'iter'+str(i)+'_ids.txt'
-        with open(ids, 'w') as ins:
         refseq = ''
 
         p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq | parallel -k -j '+str(args.t)+' bwa fastmap -w 1 {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
 
-        for l in iter(p1.stdout.readline,''):
-            l = l.rstrip()
-            data = l.split("\t")
-            if re.match("SQ", l):
-                refseq = data[1]
-                refseq = re.sub("_contig.*$","",refseq)
-            elif re.match("EM", l):
-                for a in range(4,len(data)):
-                    id = data[a]
-                    if (id == '*'):
-                        next
-                    id = re.sub(":.*$","",id)
-                    id = re.sub("/\d$","",id)
-                    if refseq not in seqhash:
-                        seqhash[refseq] = []
-                    seqhash[refseq].append(id)
-                    ins.write(id+"\n")
+        with open(ids, 'w') as ins:
+            for l in iter(p1.stdout.readline,''):
+                l = l.rstrip()
+                data = l.split("\t")
+                if re.match("SQ", l):
+                    refseq = data[1]
+                    refseq = re.sub("_contig.*$","",refseq)
+                elif re.match("EM", l):
+                    for a in range(4,len(data)):
+                        id = data[a]
+                        if (id == '*'):
+                            next
+                        id = re.sub(":.*$","",id)
+                        id = re.sub("/\d$","",id)
+                        if refseq not in seqhash:
+                            seqhash[refseq] = []
+                        seqhash[refseq].append(id)
+                        ins.write(id+"\n")
 
         ins.close()
 
