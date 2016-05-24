@@ -167,7 +167,7 @@ if __name__ == "__main__":
 
         p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq | parallel -k -j '+str(args.t)+' bwa fastmap -w 1 {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
 
-        with open(ids, 'w') as ins:
+        with open(fids, 'w') as ins:
             for l in iter(p1.stdout.readline,''):
                 l = l.rstrip()
                 data = l.split("\t")
