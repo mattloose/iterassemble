@@ -186,7 +186,7 @@ if __name__ == "__main__":
         f2 = "iter" + str(i) + "_R2.fastq"
 
         if i > 1:
-            subprocess.call("bwa index iter"+str(i-1)+"_cap3_pass.fasta; bwa mem iter"+str(i-1)+"_cap3_pass.fasta iter"+str(i-1)+"_R1.fastq iter"+str(i-1)+"_R2.fastq | samtools view -F 4 -f 8 - | awk '{print $1}' >> "+fids, shell=True)
+            subprocess.call("bwa index iter"+str(i-1)+"_cap3_pass.fasta; bwa mem -t "+str(args.t)+" iter"+str(i-1)+"_cap3_pass.fasta iter"+str(i-1)+"_R1.fastq iter"+str(i-1)+"_R2.fastq | samtools view -F 4 -f 8 - | awk '{print $1}' >> "+fids, shell=True)
 
         subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -j "+str(args.t)+" -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
         subprocess.call("ls "+args.d+"/seq*_R2.fastq | parallel -j "+str(args.t)+" -k 'cat {} | fqextract "+fids+"' > "+f2, shell=True)
