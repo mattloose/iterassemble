@@ -80,7 +80,7 @@ def assemble (i, id, arr1, args):
 
     #count = subprocess.check_output('ls -l ' + passfile + " | awk '{print $5}' ", shell=True)
 
-    return [id, os.path.getsize(passfile)]
+    return id
 
 
 def split_index (args):
@@ -169,27 +169,28 @@ if __name__ == "__main__":
         idoutput = [p.get() for p in idres]
         #print idoutput
 
-        for arr in idoutput:
-            print arr[0] + "\t" + str(arr[1])
-            if arr[0] not in last:
-                last[arr[0]] = arr[1]
-            elif last[arr[0]] == arr[1]:
-                print "Haven't increased the file size for "+arr[0]+", exiting"
-                final[arr[0]] = i-1
-                next
+        for ID in idoutput:
+            seqsum = 0
             seqcount = 0
-            for record in SeqIO.parse(arr[0] + "_files/iter" + str(i) + "_cap3_pass.fasta", "fasta"):
+            for record in SeqIO.parse(ID + "_files/iter" + str(i) + "_cap3_pass.fasta", "fasta"):
                 seqcount += 1
-                if arr[0] not in new:
-                    new[arr[0]] = dict()
-                new[arr[0]][seqcount] = str(record.seq)
-
-            last[arr[0]] = arr[1]
+                seqsum += len(str(record.seq))
+                if ID not in new:
+                    new[ID] = dict()
+                new[ID][seqcount] = str(record.seq)
+            print ID + "\t" + seqsum
+            if ID not in last:
+                last[ID] = seqsum
+            elif last[ID] >= seqsum:
+                print "Haven't increased the total bp for "+ID+", exiting"
+                final[ID] = i-1
+                next
+            last[ID] = seqsum
 
 
         ref = "iter" + str(i+1) + "_ref.fasta"
         with open(ref, 'w') as ins:
-            for id in new:
+            for id in new if id not in final:
                 for c in new[id]:
                     seq = new[id][c]
                     if i == 1 or len(seq) < args.endsize*2:
