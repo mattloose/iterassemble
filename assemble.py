@@ -140,20 +140,28 @@ def final_process (args, i, ID):
                 if (int(data[7]) > max):
                     max = int(data[7])
 
+                sstart,send = int
+                if (int(data[8]) < int(data[9])):
+                    sstart = int(data[8])
+                    send = int(data[9])
+                else:
+                    sstart = int(data[9])
+                    send = int(data[8])
+
                 #print "Min: "+str(min)+"\tMax: "+str(max)
                 if (min == 1 and max == len(str(record.seq))):
-                    #print "Matches a single hit from start to stop"
+                    print "Matches a single hit from start to stop"
                     fail = True
 
-                if (int(data[8]) == 1 and int(data[6]) > 1):
+                if (sstart == 1 and int(data[6]) > 1):
                     print "overlaps left"
                     passed = True
-                if (int(data[9]) == int(data[12]) and int(data[7]) < len(str(record.seq))):
+                if (send == int(data[12]) and int(data[7]) < len(str(record.seq))):
                     print "overlaps right"
                     passed = True
 
         if (fail == False and (passed == True or max == 0)):
-            #print "keeping "+record.id
+            print "keeping "+record.id
             keep[record.id] = record.seq
 
     if (len(keep) == 1):
