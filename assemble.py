@@ -6,6 +6,10 @@ import os.path
 import multiprocessing as mp
 from Bio import SeqIO
 import atexit
+from Bio.Align.Applications import MuscleCommandline
+from StringIO import StringIO
+from Bio import AlignIO
+from Bio.Align import AlignInfo
 
 
 def load_ids(file):
@@ -213,7 +217,7 @@ def final_process (args, i, ID):
                     min = int(data[6])
                 if (int(data[9]) > max):
                     max = int(data[9])
-            if (isgood > 2):
+            if (isgood >= 2):
                 overlap = []
                 print "this is a good overlap, min: "+str(min)+" max: "+str(max)
                 tmpseq = keep[order[a]]
@@ -232,8 +236,23 @@ def final_process (args, i, ID):
                 overlap.append(tmpseq[0:max])
                 keep[order[a+1]] = tmpseq[max:len(tmpseq)]
 
-                
+                with open(tmpfile, 'w') as ins:
+                    ins.write(">"+order[a]+"\n")
+                    ins.write(str(overlap[0])+"\n")
+                    ins.write(">"+order[a+1]+"\n")
+                    ins.write(str(overlap[1])+"\n")
+                ins.close()
+
+                muscle_cline = MuscleCommandline(input=tmpfile)
+                stdout, stderr = muscle_cline()
+                align = AlignIO.read(StringIO(stdout), "fasta")
+                print(align)
+                summary_align = AlignInfo.SummaryInfo(align)
+                consensus = summary_align.dumb_consensus()
+                print str(consensus)
+
             else:
+                print "Not full length"
                 finalseq.append(str(keep[order[a]]))
                 finalseq.append("N"*500)
         else:
