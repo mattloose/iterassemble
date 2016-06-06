@@ -108,6 +108,11 @@ def final_process (args, i, ID):
     subprocess.call("makeblastdb -dbtype nucl -in "+passfile, shell=True)
 
     for record in SeqIO.parse(passfile, "fasta"):
+
+        if (i >= 10 and len(str(record.seq)) <= args.remove):
+            print record.id+" is too short"
+            next
+
         with open(tmpfile, 'w') as ins:
             ins.write(">"+record.id+"\n")
             ins.write(str(record.seq)+"\n")
@@ -180,7 +185,7 @@ def final_process (args, i, ID):
     p1 = subprocess.Popen('blastn -db '+passfile+' -query '+args.cDNA+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
-        #print l
+        print l
         data = l.split("\t")
         if (data[0] == ID and data[1] in keep):
             orderdict[int(data[6])] = data[1]
@@ -200,8 +205,12 @@ def final_process (args, i, ID):
         keep[seqid] = tmpseq.reverse_complement()
 
     finalseq = []
+    skip = 0
 
     for a in range(0,len(order)):
+        if (skip == 1):
+            skip = 0
+            next
         if (a == len(order) - 1):
             print "Last one"
             finalseq.append(str(keep[order[a]]))
@@ -273,9 +282,25 @@ def final_process (args, i, ID):
                 finalseq.append(str(consensus))
 
             else:
-                print "Not full length"
-                finalseq.append(str(keep[order[a]]))
-                finalseq.append("N"*500)
+                print "Not full length, will try to generate consensus across whole length"
+
+                with open(tmpfile, 'w') as ins:
+                    ins.write(">"+order[a]+"\n")
+                    ins.write(str(keep[order[a]])+"\n")
+                    ins.write(">"+order[a+1]+"\n")
+                    ins.write(str(keep[order[a+1]])+"\n")
+                ins.close()
+
+                muscle_cline = MuscleCommandline(input=tmpfile)
+                stdout, stderr = muscle_cline()
+                align = AlignIO.read(StringIO(stdout), "fasta")
+                print(align)
+                summary_align = AlignInfo.SummaryInfo(align)
+                consensus = summary_align.dumb_consensus()
+                print str(consensus)
+
+                finalseq.append(str(consensus))
+                skip += 1
         else:
             print "No overlap!"
             finalseq.append(str(keep[order[a]]))
