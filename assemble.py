@@ -6,7 +6,6 @@ import os.path
 import multiprocessing as mp
 from Bio import SeqIO
 import atexit
-import motility
 
 
 def load_ids(file):
@@ -233,8 +232,7 @@ def final_process (args, i, ID):
                 overlap.append(tmpseq[0:max])
                 keep[order[a+1]] = tmpseq[max:len(tmpseq)]
 
-                pwm = motility.make_pwm(overlap)
-                print pwm.generate_sites_over(pwm.max_score())
+                
             else:
                 finalseq.append(str(keep[order[a]]))
                 finalseq.append("N"*500)
