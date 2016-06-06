@@ -88,6 +88,14 @@ def final_process (args, i, ID):
 
     passfile = dir +"/iter" + str(i) + "_cap3_pass.fasta"
     finalfile = dir +"/final_seq.fasta"
+
+    print len(list(SeqIO.parse(passfile, "fasta")))
+    if (len(list(SeqIO.parse(passfile, "fasta"))) == 1):
+        print "Only one sequence"
+        subprocess.call("cat "+passfile+" | sed 's/^>.*$/>"+ID+"/' > "+finalfile, shell=True)
+        return
+    
+
     keep = dict()
 
     tmpfile = dir+"/blasttmp.fa"
