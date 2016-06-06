@@ -122,8 +122,7 @@ def final_process (args, i, ID):
                 if (data[0] not in blastres):
                     blastres[data[0]] = dict()
                 if (data[1] not in blastres[data[0]]):
-                    blastres[data[0]][data[1]] = dict()
-                blastres[data[0]][data[1]][l] = 1
+                    blastres[data[0]][data[1]] = l
                 if (last == ""):
                     last = data[1]
                 elif(last != data[1]):
@@ -180,12 +179,16 @@ def final_process (args, i, ID):
     finalseq = []
 
     for a in range(0,len(order)):
+        if (a == len(order) - 1):
+            print "Last one"
+            finalseq.append(str(keep[order[a]]))
+            break
         print "Current: "+order[a]+"\tNext: "+order[a+1]
         if order[a] in blastres and order[a+1] in blastres[order[a]]:
             print "Have a blast result"
         else:
             print "No overlap!"
-            finalseq.append(keep[order[a]])
+            finalseq.append(str(keep[order[a]]))
             finalseq.append("N"*100)
 
     print finalseq
