@@ -249,7 +249,7 @@ if __name__ == "__main__":
                 if ID not in new:
                     new[ID] = dict()
                 new[ID][seqcount] = str(record.seq)
-            print ID + "\t" + seqsum
+            print ID + "\t" + str(seqsum)
             if ID not in last:
                 last[ID] = seqsum
             elif last[ID] >= seqsum:
