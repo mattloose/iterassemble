@@ -82,6 +82,77 @@ def assemble (i, id, arr1, args):
 
     return id
 
+def final_process (args, i, ID):
+    dir = ID + "_files"
+    print dir
+
+    passfile = dir +"/iter" + str(i) + "_cap3_pass.fasta"
+    finalfile = dir +"/final_seq.fasta"
+    keep = dict()
+
+    tmpfile = dir+"/blasttmp.fa"
+
+    subprocess.call("makeblastdb -dbtype nucl -in "+passfile, shell=True)
+
+    for record in SeqIO.parse(passfile, "fasta"):
+        with open(tmpfile, 'w') as ins:
+            ins.write(">"+record.id+"\n")
+            ins.write(str(record.seq)+"\n")
+        ins.close()
+
+        fail = False
+        min = 9999999
+        max = 0
+        last = ""
+        p1 = subprocess.Popen('blastn -db '+passfile+' -query '+tmpfile+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+
+        for l in iter(p1.stdout.readline,''):
+            l.rstrip()
+            print l
+            data = l.split("\t")
+            if (data[0] != data[1]):
+                if (last == ""):
+                    last = data[1]
+                elif(last != data[1]):
+                    min = 9999999
+                    max = 0
+                if (data[6] < min):
+                    min = data[6]
+
+                if (data[7] > max):
+                    max = data[7]
+
+                print "Min: "+min+"\tMax: "+max
+                if (min == 1 and max == len(str(record.seq))):
+                    print "Matches a single hit from start to stop"
+                    fail = True
+        if (fail == False):
+            print "keeping "+record.id
+            keep[record.id] = str(record.seq)
+
+    if (len(keep) == 1):
+        print "Only 1 sequence is left!"
+        with open(finalfile, 'w') as ins:
+            for seqid in keep:
+                ins.write(">"+ID+"\n")
+                ins.write(keep[seqid]+"\n")
+        ins.close()
+        return
+
+    orderdict = dict()
+    p1 = subprocess.Popen('blastn -db '+passfile+' -query '+args.cDNA+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    for l in iter(p1.stdout.readline,''):
+        l.rstrip()
+        print l
+        data = l.split("\t")
+        if (data[0] == ID and data[1] in keep):
+            orderdict[data[6]] = data[1]
+    order = []
+    for start in sorted(orderdict):
+        order.append(orderdict[start])
+
+    print order
+
 
 def split_index (args):
     if os.path.exists(args.d):
@@ -209,6 +280,11 @@ if __name__ == "__main__":
         if ID not in final:
             final[ID] = args.m
 
+        final_process(args, final[ID], ID)
+
+    # finalres = [pool.apply_async(final_process), args=(args, final[ID], ID)) for ID in ids]
+    # finaloutput = [p.get() for p in finalres]
+
 
     finalfa = "Final_sequences.fasta"
     if os.path.exists(finalfa):
@@ -219,32 +295,32 @@ if __name__ == "__main__":
         #else:
         #    subprocess.call("cat "+ID+"_files/iter"+str(args.m)+"_cap3_pass.fasta | sed 's/^>/>"+ID+"_/' >> "+finalfa, shell=True)
 
-    fids = "Final_ids.txt"
-    f1 = "Final_R1.fastq"
-    f2 = "Final_R2.fastq"
-
-    p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq | parallel -k -j '+str(args.t)+' bwa fastmap -w 1 {} '+finalfa,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
-
-    with open(fids, 'w') as ins:
-        for l in iter(p1.stdout.readline,''):
-            l = l.rstrip()
-            data = l.split("\t")
-        if re.match("EM", l):
-            for a in range(4,len(data)):
-                id = data[a]
-                if (id == '*'):
-                    next
-                id = re.sub(":.*$","",id)
-                id = re.sub("/\d$","",id)
-                ins.write(id+'\n')
-    ins.close()
-
-    subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
-    subprocess.call("ls "+args.d+"/seq*_R2.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f2, shell=True)
-
-    lib = "lib.txt"
-    with open(lib, 'w') as ins:
-        ins.write("lib1 bowtie "+f1+' '+f2+' '+str(args.insert)+' 0.25 FR\n')
-    ins.close()
-
-    subprocess.call('SSPACE_Standard_v3.0.pl -l '+lib+' -s '+finalfa+' -b Final_SSPACE', shell=True)
+    # fids = "Final_ids.txt"
+    # f1 = "Final_R1.fastq"
+    # f2 = "Final_R2.fastq"
+    #
+    # p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq | parallel -k -j '+str(args.t)+' bwa fastmap -w 1 {} '+finalfa,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    #
+    # with open(fids, 'w') as ins:
+    #     for l in iter(p1.stdout.readline,''):
+    #         l = l.rstrip()
+    #         data = l.split("\t")
+    #     if re.match("EM", l):
+    #         for a in range(4,len(data)):
+    #             id = data[a]
+    #             if (id == '*'):
+    #                 next
+    #             id = re.sub(":.*$","",id)
+    #             id = re.sub("/\d$","",id)
+    #             ins.write(id+'\n')
+    # ins.close()
+    #
+    # subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
+    # subprocess.call("ls "+args.d+"/seq*_R2.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f2, shell=True)
+    #
+    # lib = "lib.txt"
+    # with open(lib, 'w') as ins:
+    #     ins.write("lib1 bowtie "+f1+' '+f2+' '+str(args.insert)+' 0.25 FR\n')
+    # ins.close()
+    #
+    # subprocess.call('SSPACE_Standard_v3.0.pl -l '+lib+' -s '+finalfa+' -b Final_SSPACE', shell=True)
