@@ -148,6 +148,7 @@ def final_process (args, i, ID):
         return
 
     orderdict = dict()
+    revcom = dict()
     p1 = subprocess.Popen('blastn -db '+passfile+' -query '+args.cDNA+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l.rstrip()
@@ -155,11 +156,18 @@ def final_process (args, i, ID):
         data = l.split("\t")
         if (data[0] == ID and data[1] in keep):
             orderdict[int(data[6])] = data[1]
+            if (int(data[8]) > int(data[9])):
+                print "Reverse"
+                revcom[data[1]] = 1
     order = []
     for start in sorted(orderdict):
-        order.append(orderdict[start])
+        if orderdict[start] not in order:
+            order.append(orderdict[start])
 
     print order
+
+    for a in range(0,len(order)):
+        print "Current: "+order[a]+"\tNext: "+order[a+1]
 
 
 def split_index (args):
