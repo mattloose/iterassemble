@@ -196,7 +196,7 @@ if __name__ == "__main__":
                     if i == 1 or len(seq) < args.endsize*2:
                         ins.write(">" + id + "_contig" + str(c) + "\n")
                         ins.write(seq + "\n")
-                    elif i >= 10 and len(seq) <= 200:
+                    elif i >= 10 and len(seq) <= args.remove:
                         pass
                     else:
                         ins.write(">" + id + "_contig" + str(c) + "_start\n")
