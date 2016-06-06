@@ -99,6 +99,7 @@ def final_process (args, i, ID):
     keep = dict()
 
     tmpfile = dir+"/blasttmp.fa"
+    tmpfile2 = dir+"/blasttmp2.fa"
     blastres = dict()
     subprocess.call("makeblastdb -dbtype nucl -in "+passfile, shell=True)
 
@@ -116,7 +117,7 @@ def final_process (args, i, ID):
 
         for l in iter(p1.stdout.readline,''):
             l = l.rstrip()
-            print l
+            #print l
             data = l.split("\t")
             if (data[0] != data[1]):
                 if (data[0] not in blastres):
@@ -134,12 +135,12 @@ def final_process (args, i, ID):
                 if (int(data[7]) > max):
                     max = int(data[7])
 
-                print "Min: "+str(min)+"\tMax: "+str(max)
+                #print "Min: "+str(min)+"\tMax: "+str(max)
                 if (min == 1 and max == len(str(record.seq))):
-                    print "Matches a single hit from start to stop"
+                    #print "Matches a single hit from start to stop"
                     fail = True
         if (fail == False):
-            print "keeping "+record.id
+            #print "keeping "+record.id
             keep[record.id] = record.seq
 
     if (len(keep) == 1):
@@ -156,13 +157,13 @@ def final_process (args, i, ID):
     revcom = dict()
     p1 = subprocess.Popen('blastn -db '+passfile+' -query '+args.cDNA+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
-        l.rstrip()
-        print l
+        l = l.rstrip()
+        #print l
         data = l.split("\t")
         if (data[0] == ID and data[1] in keep):
             orderdict[int(data[6])] = data[1]
             if (int(data[8]) > int(data[9])):
-                print "Reverse"
+                #print "Reverse"
                 revcom[data[1]] = 1
     order = []
     for start in sorted(orderdict):
@@ -172,7 +173,7 @@ def final_process (args, i, ID):
     print order
 
     for seqid in revcom:
-        print "Reversing "+seqid
+        #print "Reversing "+seqid
         tmpseq = keep[seqid]
         keep[seqid] = tmpseq.reverse_complement()
 
@@ -186,12 +187,29 @@ def final_process (args, i, ID):
         print "Current: "+order[a]+"\tNext: "+order[a+1]
         if order[a] in blastres and order[a+1] in blastres[order[a]]:
             print "Have a blast result"
+            with open(tmpfile, 'w') as ins:
+                ins.write(">"+order[a]+"\n")
+                ins.write(str(keep[order[a]])+"\n")
+            ins.close()
+            with open(tmpfile2, 'w') as ins:
+                ins.write(">"+order[a+1]+"\n")
+                ins.write(str(keep[order[a+1]])+"\n")
+            ins.close()
+
+            p1 = subprocess.Popen('blastn -task blastn -subject '+tmpfile2+' -query '+tmpfile+' -outfmt 6 -evalue 1e-03',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+            for l in iter(p1.stdout.readline,''):
+                l = l.rstrip()
+                print l
+                data = l.split("\t") 
         else:
             print "No overlap!"
             finalseq.append(str(keep[order[a]]))
-            finalseq.append("N"*100)
+            finalseq.append("N"*500)
 
-    print finalseq
+    with open(finalfile, 'w') as ins:
+        ins.write(">"+ID+"\n")
+        ins.write("".join(finalseq)+"\n")
+    ins.close()
 
 def split_index (args):
     if os.path.exists(args.d):
