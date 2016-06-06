@@ -6,6 +6,7 @@ import os.path
 import multiprocessing as mp
 from Bio import SeqIO
 import atexit
+import motility
 
 
 def load_ids(file):
@@ -196,11 +197,47 @@ def final_process (args, i, ID):
                 ins.write(str(keep[order[a+1]])+"\n")
             ins.close()
 
+            isgood = 0
+            min = 9999999
+            max = 0
+
             p1 = subprocess.Popen('blastn -task blastn -subject '+tmpfile2+' -query '+tmpfile+' -outfmt 6 -evalue 1e-03',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
             for l in iter(p1.stdout.readline,''):
                 l = l.rstrip()
                 print l
-                data = l.split("\t") 
+                data = l.split("\t")
+                if (int(data[7]) >= len(str(keep[order[a]])) - 5):
+                    isgood += 1
+                if (int(data[8]) <= 5):
+                    isgood += 1
+                if (int(data[6]) < min):
+                    min = int(data[6])
+                if (int(data[9]) > max):
+                    max = int(data[9])
+            if (isgood > 2):
+                overlap = []
+                print "this is a good overlap, min: "+str(min)+" max: "+str(max)
+                tmpseq = keep[order[a]]
+                print "First:"
+                print str(tmpseq)
+                print str(tmpseq[0:min])
+                print str(tmpseq[min:len(tmpseq)])
+                overlap.append(tmpseq[min:len(tmpseq)])
+                keep[order[a]] = tmpseq[0:min]
+
+                print "Second:"
+                tmpseq = keep[order[a+1]]
+                print str(tmpseq)
+                print str(tmpseq[0:max])
+                print str(tmpseq[max:len(tmpseq)])
+                overlap.append(tmpseq[0:max])
+                keep[order[a+1]] = tmpseq[max:len(tmpseq)]
+
+                pwm = motility.make_pwm(overlap)
+                print pwm.generate_sites_over(pwm.max_score())
+            else:
+                finalseq.append(str(keep[order[a]]))
+                finalseq.append("N"*500)
         else:
             print "No overlap!"
             finalseq.append(str(keep[order[a]]))
