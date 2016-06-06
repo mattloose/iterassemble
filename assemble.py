@@ -94,7 +94,7 @@ def final_process (args, i, ID):
         print "Only one sequence"
         subprocess.call("cat "+passfile+" | sed 's/^>.*$/>"+ID+"/' > "+finalfile, shell=True)
         return
-    
+
 
     keep = dict()
 
@@ -124,13 +124,13 @@ def final_process (args, i, ID):
                 elif(last != data[1]):
                     min = 9999999
                     max = 0
-                if (data[6] < min):
-                    min = data[6]
+                if (int(data[6]) < min):
+                    min = int(data[6])
 
-                if (data[7] > max):
-                    max = data[7]
+                if (int(data[7]) > max):
+                    max = int(data[7])
 
-                print "Min: "+min+"\tMax: "+max
+                print "Min: "+str(min)+"\tMax: "+str(max)
                 if (min == 1 and max == len(str(record.seq))):
                     print "Matches a single hit from start to stop"
                     fail = True
@@ -154,7 +154,7 @@ def final_process (args, i, ID):
         print l
         data = l.split("\t")
         if (data[0] == ID and data[1] in keep):
-            orderdict[data[6]] = data[1]
+            orderdict[int(data[6])] = data[1]
     order = []
     for start in sorted(orderdict):
         order.append(orderdict[start])
