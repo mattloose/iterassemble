@@ -111,7 +111,7 @@ def final_process (args, i, ID):
 
         if (i >= 10 and len(str(record.seq)) <= args.remove):
             print record.id+" is too short"
-            next
+            continue
 
         with open(tmpfile, 'w') as ins:
             ins.write(">"+record.id+"\n")
@@ -210,7 +210,7 @@ def final_process (args, i, ID):
     for a in range(0,len(order)):
         if (skip == 1):
             skip = 0
-            next
+            continue
         if (a == len(order) - 1):
             print "Last one"
             finalseq.append(str(keep[order[a]]))
@@ -300,7 +300,7 @@ def final_process (args, i, ID):
                 print str(consensus)
 
                 finalseq.append(str(consensus))
-                skip += 1
+                skip = 1
         else:
             print "No overlap!"
             finalseq.append(str(keep[order[a]]))
@@ -382,7 +382,7 @@ if __name__ == "__main__":
                 for a in range(4,len(data)):
                     id = data[a]
                     if (id == '*'):
-                        next
+                        continue
                     id = re.sub(":.*$","",id)
                     id = re.sub("/\d$","",id)
                     if refseq not in seqhash:
@@ -412,7 +412,7 @@ if __name__ == "__main__":
             elif last[ID] >= seqsum:
                 print "Haven't increased the total bp for "+ID+", exiting"
                 final[ID] = i-1
-                next
+                continue
             last[ID] = seqsum
 
 
