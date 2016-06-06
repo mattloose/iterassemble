@@ -114,14 +114,15 @@ def final_process (args, i, ID):
         ins.close()
 
         fail = False
+        passed = False
         min = 9999999
         max = 0
         last = ""
-        p1 = subprocess.Popen('blastn -db '+passfile+' -query '+tmpfile+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+        p1 = subprocess.Popen('blastn -db '+passfile+' -query '+tmpfile+" -outfmt '6 std slen'",shell=True,universal_newlines = True, stdout=subprocess.PIPE)
 
         for l in iter(p1.stdout.readline,''):
             l = l.rstrip()
-            #print l
+            print l
             data = l.split("\t")
             if (data[0] != data[1]):
                 if (data[0] not in blastres):
@@ -143,7 +144,15 @@ def final_process (args, i, ID):
                 if (min == 1 and max == len(str(record.seq))):
                     #print "Matches a single hit from start to stop"
                     fail = True
-        if (fail == False):
+
+                if (int(data[8]) == 1 and int(data[6]) > 1):
+                    print "overlaps left"
+                    passed = True
+                if (int(data[9]) == int(data[12]) and int(data[7]) < len(str(record.seq))):
+                    print "overlaps right"
+                    passed = True
+
+        if (fail == False and (passed == True or max == 0)):
             #print "keeping "+record.id
             keep[record.id] = record.seq
 
