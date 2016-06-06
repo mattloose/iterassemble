@@ -140,7 +140,8 @@ def final_process (args, i, ID):
                 if (int(data[7]) > max):
                     max = int(data[7])
 
-                sstart,send = int
+                sstart = 0
+                send = 0
                 if (int(data[8]) < int(data[9])):
                     sstart = int(data[8])
                     send = int(data[9])
