@@ -261,19 +261,20 @@ if __name__ == "__main__":
 
         ref = "iter" + str(i+1) + "_ref.fasta"
         with open(ref, 'w') as ins:
-            for id in new if id not in final:
-                for c in new[id]:
-                    seq = new[id][c]
-                    if i == 1 or len(seq) < args.endsize*2:
-                        ins.write(">" + id + "_contig" + str(c) + "\n")
-                        ins.write(seq + "\n")
-                    elif i >= 10 and len(seq) <= args.remove:
-                        pass
-                    else:
-                        ins.write(">" + id + "_contig" + str(c) + "_start\n")
-                        ins.write(seq[:args.endsize] + "\n")
-                        ins.write(">" + id + "_contig" + str(c) + "_end\n")
-                        ins.write(seq[-args.endsize:] + "\n")
+            for id in new:
+                if id not in final:
+                    for c in new[id]:
+                        seq = new[id][c]
+                        if i == 1 or len(seq) < args.endsize*2:
+                            ins.write(">" + id + "_contig" + str(c) + "\n")
+                            ins.write(seq + "\n")
+                        elif i >= 10 and len(seq) <= args.remove:
+                            pass
+                        else:
+                            ins.write(">" + id + "_contig" + str(c) + "_start\n")
+                            ins.write(seq[:args.endsize] + "\n")
+                            ins.write(">" + id + "_contig" + str(c) + "_end\n")
+                            ins.write(seq[-args.endsize:] + "\n")
         ins.close()
 
     for ID in ids:
