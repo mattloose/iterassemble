@@ -214,7 +214,7 @@ def final_process (args, i, ID):
                 if (int(data[8]) <= 5):
                     isgood += 1
                 if (int(data[6]) < min):
-                    min = int(data[6])
+                    min = int(data[6])-1
                 if (int(data[9]) > max):
                     max = int(data[9])
             if (isgood >= 2):
@@ -250,6 +250,9 @@ def final_process (args, i, ID):
                 summary_align = AlignInfo.SummaryInfo(align)
                 consensus = summary_align.dumb_consensus()
                 print str(consensus)
+
+                finalseq.append(str(keep[order[a]]))
+                finalseq.append(str(consensus))
 
             else:
                 print "Not full length"
@@ -403,7 +406,7 @@ if __name__ == "__main__":
         subprocess.call("rm "+finalfa, shell=True)
     for ID in ids:
         #if ID in final:
-            subprocess.call("cat "+ID+"_files/iter"+str(final[ID])+"_cap3_pass.fasta | sed 's/^>/>"+ID+"_/' >> "+finalfa, shell=True)
+            subprocess.call("cat "+ID+"_files/final_seq.fasta >> "+finalfa, shell=True)
         #else:
         #    subprocess.call("cat "+ID+"_files/iter"+str(args.m)+"_cap3_pass.fasta | sed 's/^>/>"+ID+"_/' >> "+finalfa, shell=True)
 
