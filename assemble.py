@@ -99,7 +99,7 @@ def final_process (args, i, ID):
     keep = dict()
 
     tmpfile = dir+"/blasttmp.fa"
-
+    blastres = dict()
     subprocess.call("makeblastdb -dbtype nucl -in "+passfile, shell=True)
 
     for record in SeqIO.parse(passfile, "fasta"):
@@ -115,10 +115,15 @@ def final_process (args, i, ID):
         p1 = subprocess.Popen('blastn -db '+passfile+' -query '+tmpfile+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
 
         for l in iter(p1.stdout.readline,''):
-            l.rstrip()
+            l = l.rstrip()
             print l
             data = l.split("\t")
             if (data[0] != data[1]):
+                if (data[0] not in blastres):
+                    blastres[data[0]] = dict()
+                if (data[1] not in blastres[data[0]]):
+                    blastres[data[0]][data[1]] = dict()
+                blastres[data[0]][data[1]][l] = 1
                 if (last == ""):
                     last = data[1]
                 elif(last != data[1]):
@@ -136,7 +141,7 @@ def final_process (args, i, ID):
                     fail = True
         if (fail == False):
             print "keeping "+record.id
-            keep[record.id] = str(record.seq)
+            keep[record.id] = record.seq
 
     if (len(keep) == 1):
         print "Only 1 sequence is left!"
@@ -146,6 +151,7 @@ def final_process (args, i, ID):
                 ins.write(keep[seqid]+"\n")
         ins.close()
         return
+
 
     orderdict = dict()
     revcom = dict()
@@ -166,9 +172,23 @@ def final_process (args, i, ID):
 
     print order
 
+    for seqid in revcom:
+        print "Reversing "+seqid
+        tmpseq = keep[seqid]
+        keep[seqid] = tmpseq.reverse_complement()
+
+    finalseq = []
+
     for a in range(0,len(order)):
         print "Current: "+order[a]+"\tNext: "+order[a+1]
+        if order[a] in blastres and order[a+1] in blastres[order[a]]:
+            print "Have a blast result"
+        else:
+            print "No overlap!"
+            finalseq.append(keep[order[a]])
+            finalseq.append("N"*100)
 
+    print finalseq
 
 def split_index (args):
     if os.path.exists(args.d):
