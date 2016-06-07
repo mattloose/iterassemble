@@ -175,7 +175,7 @@ def final_process (args, i, ID):
         with open(finalfile, 'w') as ins:
             for seqid in keep:
                 ins.write(">"+ID+"\n")
-                ins.write(keep[seqid]+"\n")
+                ins.write(str(keep[seqid])+"\n")
         ins.close()
         return
 
