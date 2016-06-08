@@ -228,14 +228,17 @@ def final_process (args, i, ID):
             ins.close()
 
             isgood = 0
+            islong = 0
             min = 9999999
             max = 0
 
-            p1 = subprocess.Popen('blastn -task blastn -subject '+tmpfile2+' -query '+tmpfile+' -outfmt 6 -evalue 1e-03',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+            p1 = subprocess.Popen('blastn -task blastn -subject '+tmpfile2+' -query '+tmpfile+' -outfmt 6 -evalue 1e-10',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
             for l in iter(p1.stdout.readline,''):
                 l = l.rstrip()
                 print l
                 data = l.split("\t")
+                if (int(data[2]) >= 90 and int(data[3]) >= 100):
+                    islong += 1
                 if (int(data[7]) >= len(str(keep[order[a]])) - 5):
                     isgood += 1
                 if (int(data[8]) <= 5):
@@ -248,18 +251,18 @@ def final_process (args, i, ID):
                 overlap = []
                 print "this is a good overlap, min: "+str(min)+" max: "+str(max)
                 tmpseq = keep[order[a]]
-                print "First:"
-                print str(tmpseq)
-                print str(tmpseq[0:min])
-                print str(tmpseq[min:len(tmpseq)])
+                # print "First:"
+                # print str(tmpseq)
+                # print str(tmpseq[0:min])
+                # print str(tmpseq[min:len(tmpseq)])
                 overlap.append(tmpseq[min:len(tmpseq)])
                 keep[order[a]] = tmpseq[0:min]
 
-                print "Second:"
+                # print "Second:"
                 tmpseq = keep[order[a+1]]
-                print str(tmpseq)
-                print str(tmpseq[0:max])
-                print str(tmpseq[max:len(tmpseq)])
+                # print str(tmpseq)
+                # print str(tmpseq[0:max])
+                # print str(tmpseq[max:len(tmpseq)])
                 overlap.append(tmpseq[0:max])
                 keep[order[a+1]] = tmpseq[max:len(tmpseq)]
 
@@ -282,25 +285,30 @@ def final_process (args, i, ID):
                 finalseq.append(str(consensus))
 
             else:
-                print "Not full length, will try to generate consensus across whole length"
+                if (islong > 0):
+                    print "Not full length, but has long high quality alignment. Will try to generate consensus across whole length"
 
-                with open(tmpfile, 'w') as ins:
-                    ins.write(">"+order[a]+"\n")
-                    ins.write(str(keep[order[a]])+"\n")
-                    ins.write(">"+order[a+1]+"\n")
-                    ins.write(str(keep[order[a+1]])+"\n")
-                ins.close()
+                    with open(tmpfile, 'w') as ins:
+                        ins.write(">"+order[a]+"\n")
+                        ins.write(str(keep[order[a]])+"\n")
+                        ins.write(">"+order[a+1]+"\n")
+                        ins.write(str(keep[order[a+1]])+"\n")
+                    ins.close()
 
-                muscle_cline = MuscleCommandline(input=tmpfile)
-                stdout, stderr = muscle_cline()
-                align = AlignIO.read(StringIO(stdout), "fasta")
-                print(align)
-                summary_align = AlignInfo.SummaryInfo(align)
-                consensus = summary_align.dumb_consensus()
-                print str(consensus)
+                    muscle_cline = MuscleCommandline(input=tmpfile)
+                    stdout, stderr = muscle_cline()
+                    align = AlignIO.read(StringIO(stdout), "fasta")
+                    print(align)
+                    summary_align = AlignInfo.SummaryInfo(align)
+                    consensus = summary_align.dumb_consensus()
+                    print str(consensus)
 
-                finalseq.append(str(consensus))
-                skip = 1
+                    finalseq.append(str(consensus))
+                    skip = 1
+                else:
+                    print "Assuming this is a repeat, will leave seperate"
+                    finalseq.append(str(keep[order[a]]))
+                    finalseq.append("N"*500)
         else:
             print "No overlap!"
             finalseq.append(str(keep[order[a]]))
