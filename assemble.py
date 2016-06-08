@@ -407,21 +407,27 @@ if __name__ == "__main__":
 
         for ID in idoutput:
             seqsum = 0
+            maxseq = 0
             seqcount = 0
             for record in SeqIO.parse(ID + "_files/iter" + str(i) + "_cap3_pass.fasta", "fasta"):
                 seqcount += 1
                 seqsum += len(str(record.seq))
+                if len(str(record.seq)) > maxseq:
+                    maxseq = len(str(record.seq))
                 if ID not in new:
                     new[ID] = dict()
                 new[ID][seqcount] = str(record.seq)
-            print ID + "\t" + str(seqsum)
+            print ID + "\t" + str(maxseq) + "\t" + str(seqsum)
             if ID not in last:
-                last[ID] = seqsum
-            elif last[ID] >= seqsum:
-                print "Haven't increased the total bp for "+ID+", exiting"
+                last[ID] = dict()
+                last[ID]['sum'] = seqsum
+                last[ID]['max'] = maxseq
+            elif last[ID]['sum'] >= seqsum and last[ID]['max'] >= maxseq:
+                print "Haven't increased the total or max bp for "+ID+", exiting"
                 final[ID] = i-1
                 continue
-            last[ID] = seqsum
+            last[ID]['sum'] = seqsum
+            last[ID]['max'] = maxseq
 
 
         ref = "iter" + str(i+1) + "_ref.fasta"
