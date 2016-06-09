@@ -237,7 +237,7 @@ def final_process (args, i, ID):
                 l = l.rstrip()
                 print l
                 data = l.split("\t")
-                if (int(data[2]) >= 90 and int(data[3]) >= 100):
+                if (data[2] >= 90 and int(data[3]) >= 100):
                     islong += 1
                 if (int(data[7]) >= len(str(keep[order[a]])) - 5):
                     isgood += 1
@@ -307,7 +307,7 @@ def final_process (args, i, ID):
 
                     # finalseq.append(str(consensus))
                     # skip = 1
-                    
+
                 else:
                     print "Assuming this is a repeat, will leave seperate"
                     finalseq.append(str(keep[order[a]]))
