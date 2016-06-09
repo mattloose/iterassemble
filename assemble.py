@@ -303,8 +303,11 @@ def final_process (args, i, ID):
                     consensus = summary_align.dumb_consensus()
                     print str(consensus)
 
-                    finalseq.append(str(consensus))
-                    skip = 1
+                    keep[order[a+1]] = consensus
+
+                    # finalseq.append(str(consensus))
+                    # skip = 1
+                    
                 else:
                     print "Assuming this is a repeat, will leave seperate"
                     finalseq.append(str(keep[order[a]]))
