@@ -278,7 +278,7 @@ def final_process (args, i, ID):
                 align = AlignIO.read(StringIO(stdout), "fasta")
                 print(align)
                 summary_align = AlignInfo.SummaryInfo(align)
-                consensus = summary_align.dumb_consensus()
+                consensus = summary_align.dumb_consensus(ambiguous='N')
                 print str(consensus)
 
                 finalseq.append(str(keep[order[a]]))
@@ -300,7 +300,7 @@ def final_process (args, i, ID):
                     align = AlignIO.read(StringIO(stdout), "fasta")
                     print(align)
                     summary_align = AlignInfo.SummaryInfo(align)
-                    consensus = summary_align.dumb_consensus()
+                    consensus = summary_align.dumb_consensus(ambiguous='N')
                     print str(consensus)
 
                     keep[order[a+1]] = consensus
