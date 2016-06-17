@@ -458,19 +458,19 @@ if __name__ == "__main__":
     for ID in ids:
         if ID not in final:
             final[ID] = args.m
-
-        final_process(args, final[ID], ID)
+        if final[ID] > 0:
+            final_process(args, final[ID], ID)
 
     # finalres = [pool.apply_async(final_process), args=(args, final[ID], ID)) for ID in ids]
     # finaloutput = [p.get() for p in finalres]
 
 
     finalfa = "Final_sequences.fasta"
-    if os.path.exists(finalfa):
-        subprocess.call("rm "+finalfa, shell=True)
-    for ID in ids:
+    # if os.path.exists(finalfa):
+    #     subprocess.call("rm "+finalfa, shell=True)
+    # for ID in ids:
         #if ID in final:
-            subprocess.call("cat "+ID+"_files/final_seq.fasta >> "+finalfa, shell=True)
+    subprocess.call("cat *_files/final_seq.fasta > "+finalfa, shell=True)
         #else:
         #    subprocess.call("cat "+ID+"_files/iter"+str(args.m)+"_cap3_pass.fasta | sed 's/^>/>"+ID+"_/' >> "+finalfa, shell=True)
 
