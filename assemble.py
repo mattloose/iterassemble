@@ -422,6 +422,10 @@ if __name__ == "__main__":
                 new[ID][seqcount] = str(record.seq)
             print ID + "\t" + str(maxseq) + "\t" + str(seqsum)
             if ID not in last:
+                if seqsum == 0:
+                    print "No bases for "+ID+", exiting"
+                    final[ID] = i-1
+                    continue
                 last[ID] = dict()
                 last[ID]['sum'] = seqsum
                 last[ID]['max'] = maxseq
