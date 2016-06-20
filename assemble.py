@@ -420,7 +420,7 @@ if __name__ == "__main__":
                 if ID not in new:
                     new[ID] = dict()
                 new[ID][seqcount] = str(record.seq)
-            print ID + "\t" + str(maxseq) + "\t" + str(seqsum)
+            print ID + "\t" + str(seqcount) + "\t" + str(maxseq) + "\t" + str(seqsum)
             if ID not in last:
                 if seqsum == 0:
                     print "No bases for "+ID+", exiting"
@@ -429,12 +429,14 @@ if __name__ == "__main__":
                 last[ID] = dict()
                 last[ID]['sum'] = seqsum
                 last[ID]['max'] = maxseq
-            elif last[ID]['sum'] >= seqsum and last[ID]['max'] >= maxseq:
-                print "Haven't increased the total or max bp for "+ID+", exiting"
+                last[ID]['count'] = seqcount
+            elif (last[ID]['sum'] >= seqsum and last[ID]['max'] >= maxseq) or seqcount >= last[ID]['count']*2:
+                print "Haven't increased the total or max bp, or doubled the number of contigs for "+ID+", exiting"
                 final[ID] = i-1
                 continue
             last[ID]['sum'] = seqsum
             last[ID]['max'] = maxseq
+            last[ID]['count'] = seqcount
 
 
         ref = "iter" + str(i+1) + "_ref.fasta"
