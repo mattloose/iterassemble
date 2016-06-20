@@ -430,8 +430,8 @@ if __name__ == "__main__":
                 last[ID]['sum'] = seqsum
                 last[ID]['max'] = maxseq
                 last[ID]['count'] = seqcount
-            elif (last[ID]['sum'] >= seqsum and last[ID]['max'] >= maxseq) or seqcount >= last[ID]['count']*2:
-                print "Haven't increased the total or max bp, or doubled the number of contigs for "+ID+", exiting"
+            elif (last[ID]['sum'] >= seqsum and last[ID]['max'] >= maxseq) or seqcount >= last[ID]['count']*3:
+                print "Haven't increased the total or max bp, or tripled the number of contigs for "+ID+", exiting"
                 final[ID] = i-1
                 continue
             last[ID]['sum'] = seqsum
