@@ -31,8 +31,8 @@ def assemble (i, id, arr1, args):
     if not os.path.exists(dir):
         subprocess.call('mkdir '+dir, shell=True)
 
-    f1 = dir + "/iter" + str(i) + "_R1.fastq"
-    f2 = dir + "/iter" + str(i) + "_R2.fastq"
+    f1 = dir + "/iter" + str(i) + "_reads.fastq"
+    #f2 = dir + "/iter" + str(i) + "_R2.fastq"
     fids = dir + "/iter" + str(i) + "_ids.txt"
 
     with open(fids, 'w') as ins:
@@ -42,42 +42,44 @@ def assemble (i, id, arr1, args):
     if i > 1:
         subprocess.call("bwa index "+dir+"/iter"+str(i-1)+"_cap3_pass.fasta; bwa mem "+dir+"/iter"+str(i-1)+"_cap3_pass.fasta "+dir+"/iter"+str(i-1)+"_R1.fastq "+dir+"/iter"+str(i-1)+"_R2.fastq | samtools view -F 4 -f 8 - | awk '{print $1}' >> "+fids, shell=True)
 
-    subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
-    subprocess.call("ls "+args.d+"/seq*_R2.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f2, shell=True)
+    subprocess.call("ls "+args.d+"/seq*.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
+    #subprocess.call("ls "+args.d+"/seq*_R2.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f2, shell=True)
 
-    conf = dir + "/conf.txt"
-    with open(conf, 'w') as ins:
-        ins.write("max_rd_len=150\n[LIB]\navg_ins="+str(args.insert)+"\nreverse_seq=0\nasm_flags=3\nrd_len_cutoff=100\nrank=1\npair_num_cutoff=3\n")
-        ins.write("q1="+f1+"\n")
-        ins.write("q2="+f2+"\n")
-    ins.close()
+    # conf = dir + "/conf.txt"
+    # with open(conf, 'w') as ins:
+    #     ins.write("max_rd_len=150\n[LIB]\navg_ins="+str(args.insert)+"\nreverse_seq=0\nasm_flags=3\nrd_len_cutoff=100\nrank=1\npair_num_cutoff=3\n")
+    #     ins.write("q1="+f1+"\n")
+    #     ins.write("q2="+f2+"\n")
+    # ins.close()
+    #
+    # soapout1 = dir + "/iter" + str(i) + "_63soap";
+    # soapout2 = dir + "/iter" + str(i) + "_31soap";
+    # if os.path.exists(soapout1+".scafSeq"):
+    #     subprocess.call("rm "+soapout1+"* "+soapout2+"* ", shell=True)
+    fmlout = dir + "/iter" + str(i) + "_fml.fasta";
+    #
+    # subprocess.call('SOAPdenovo-63mer all -s '+conf+' -K 63 -R -F -p 2 -o '+soapout1, shell=True)
+    #
+    # subprocess.call('SOAPdenovo-63mer all -s '+conf+' -R -F -p 2 -o '+soapout2, shell=True)
 
-    soapout1 = dir + "/iter" + str(i) + "_63soap";
-    soapout2 = dir + "/iter" + str(i) + "_31soap";
-    if os.path.exists(soapout1+".scafSeq"):
-        subprocess.call("rm "+soapout1+"* "+soapout2+"* ", shell=True)
-    soapout = dir + "/iter" + str(i) + "_soap";
+    subprocess.call('fml-asm '+f1+' | awk \'BEGIN{P=1} {if(P==1||P==2){gsub(/^[@]/,">");print;}P++;if(P==4){P=0}}\' > '+fmlout, shell=True)
 
-    subprocess.call('SOAPdenovo-63mer all -s '+conf+' -K 63 -R -F -p 2 -o '+soapout1, shell=True)
-
-    subprocess.call('SOAPdenovo-63mer all -s '+conf+' -R -F -p 2 -o '+soapout2, shell=True)
-
-    subprocess.call('cat ' + soapout1 + '.scafSeq ' + soapout2 + '.scafSeq > ' +  soapout + '.scafSeq', shell=True)
+    #subprocess.call('cat ' + soapout1 + '.scafSeq ' + soapout2 + '.scafSeq > ' +  soapout + '.scafSeq', shell=True)
 
     if i > 1:
         #fa = dir + '/iter' + str(i) + '.fasta'
         #subprocess.call('cat '+f1+' '+f2+' | awk \'BEGIN{P=1}{if(P==1||P==2){gsub(/^[@]/,">");print}; if(P==4)P=0; P++}\' > '+fa+ ' ; cap3 '+fa, shell=True)
-        subprocess.call('bwa mem '+dir+'/iter'+str(i-1)+'_cap3_pass.fasta '+f1+' '+f2+' > '+dir+'/iter'+str(i)+'.sam', shell=True)
-        subprocess.call('grep ">" '+dir+'/iter'+str(i-1)+'_cap3_pass.fasta | sed \'s/^>//\' | while read -r line; do egrep "$line\s" '+dir+'/iter'+str(i)+'.sam | bam2fastx -a -A -s -Q -o '+dir+'/temp.fa - ; if [[ -s '+dir+'/temp.fa ]]; then timeout 20m cap3 '+dir+'/temp.fa; cat '+dir+'/temp.fa.cap.contigs >> ' + soapout + '.scafSeq; fi; done', shell=True)
+        subprocess.call('bwa mem '+dir+'/iter'+str(i-1)+'_cap3_pass.fasta '+f1+' > '+dir+'/iter'+str(i)+'.sam', shell=True)
+        subprocess.call('grep ">" '+dir+'/iter'+str(i-1)+'_cap3_pass.fasta | sed \'s/^>//\' | while read -r line; do egrep "$line\s" '+dir+'/iter'+str(i)+'.sam | bam2fastx -a -A -s -Q -o '+dir+'/temp.fa - ; if [[ -s '+dir+'/temp.fa ]]; then timeout 20m cap3 '+dir+'/temp.fa; cat '+dir+'/temp.fa.cap.contigs >> ' + fmlout + '; fi; done', shell=True)
         #subprocess.call('cat ' + dir + '/iter' + str(i-1) + '_cap3_pass.fasta '+fa+'.cap.contigs '+fa+'.cap.singlets >> ' + soapout + '.scafSeq', shell=True)
         #subprocess.call('cat ' + dir + '/iter' + str(i-1) + '_cap3_pass.fasta '+fa+'.cap.contigs >> ' + soapout + '.scafSeq', shell=True)
-        subprocess.call('cat ' + dir + '/iter' + str(i-1) + '_cap3_pass.fasta >> ' + soapout + '.scafSeq', shell=True)
+        subprocess.call('cat ' + dir + '/iter' + str(i-1) + '_cap3_pass.fasta >> ' + fmlout, shell=True)
 
 
-    subprocess.call('cap3 ' + soapout + '.scafSeq -k 0 -p 75 -o 30', shell=True)
+    subprocess.call('cap3 ' + fmlout + ' -k 0 -p 75 -o 30', shell=True)
 
     cap3 = dir + "/iter" + str(i) + "_cap3.fasta"
-    subprocess.call('cat ' + soapout + '.scafSeq.cap.contigs ' + soapout + '.scafSeq.cap.singlets > ' + cap3, shell=True)
+    subprocess.call('cat ' + fmlout + '.cap.contigs ' + fmlout + '.cap.singlets > ' + cap3, shell=True)
 
     passfile = dir + "/iter" + str(i) + "_cap3_pass.fasta"
     subprocess.call('bwa mem ' + args.cDNA + ' ' + cap3 + ' | grep "'+id+'"| bam2fastx -s -M -Q -a -o ' + passfile + ' - ', shell=True)
@@ -430,7 +432,7 @@ if __name__ == "__main__":
                 last[ID]['sum'] = seqsum
                 last[ID]['max'] = maxseq
                 last[ID]['count'] = seqcount
-            elif (last[ID]['sum'] >= seqsum and last[ID]['max'] >= maxseq) or (seqcount >= last[ID]['count']*3 and i >:
+            elif (last[ID]['sum'] >= seqsum and last[ID]['max'] >= maxseq) or (seqcount >= last[ID]['count']*3 and i > 2):
                 print "Haven't increased the total or max bp, or tripled the number of contigs for "+ID+", exiting"
                 final[ID] = i-1
                 continue
