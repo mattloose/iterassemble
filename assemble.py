@@ -299,6 +299,23 @@ def final_process (args, i, ID):
                     stdout, stderr = muscle_cline()
                     align = AlignIO.read(StringIO(stdout), "fasta")
                     print(align)
+                    A=list(align[0])
+                    B=list(align[1])
+                    count=0
+                    gaps=0
+                    for n in range(0, len(A)):
+                        if A[n]==B[n]:
+                            if A[n]!="-":
+                                count=count+1
+                            else:
+                                gaps=gaps+1
+                    perid = 100*(count/float((len(A)-gaps)))
+                    print perid
+                    if perid < 70:
+                        print "Assuming this is a repeat, will leave seperate"
+                        finalseq.append(str(keep[order[a]]))
+                        finalseq.append("N"*500)
+                        continue
                     summary_align = AlignInfo.SummaryInfo(align)
                     consensus = summary_align.dumb_consensus(ambiguous='N')
                     print str(consensus)
