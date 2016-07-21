@@ -381,7 +381,7 @@ if __name__ == "__main__":
         seqhash = dict()
         refseq = ''
 
-        p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq | parallel -k -j '+str(args.t)+' bwa fastmap -w 1 {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+        p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq | parallel -k -j '+str(args.t)+' bwa fastmap -l 60 {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
 
         for l in iter(p1.stdout.readline,''):
             l = l.rstrip()
@@ -430,7 +430,7 @@ if __name__ == "__main__":
                 last[ID]['sum'] = seqsum
                 last[ID]['max'] = maxseq
                 last[ID]['count'] = seqcount
-            elif (last[ID]['sum'] >= seqsum and last[ID]['max'] >= maxseq) or (seqcount >= last[ID]['count']*3 and i > 2):
+            elif (last[ID]['sum'] >= seqsum and last[ID]['max'] >= maxseq) or (seqcount >= last[ID]['count']*3 and i >:
                 print "Haven't increased the total or max bp, or tripled the number of contigs for "+ID+", exiting"
                 final[ID] = i-1
                 continue
