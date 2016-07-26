@@ -370,7 +370,7 @@ if __name__ == "__main__":
     parser.add_argument('-i','--insert', nargs='?', metavar='INT', default=200, type=int, help='Average insert size (default: %(default)s)')
     parser.add_argument('-e','--endsize', nargs='?', metavar='INT', default=600, type=int, help='Number of bases from each end of the contigs to map (default: %(default)s)')
     parser.add_argument('-r','--remove', nargs='?', metavar='INT', default=200, type=int, help='After 10 iterations, remove contigs shorter than INT (default: %(default)s)')
-    parser.add_argument('-f','--fastmap', nargs='?', metavar='INT', default=50, type=int, help='Minimum SMEM length permited in bwa fastmap (default: %(default)s)')
+    parser.add_argument('-f','--fastmap', nargs='?', metavar='INT', default=60, type=int, help='Minimum SMEM length permited in bwa fastmap (default: %(default)s)')
 
     args = parser.parse_args()
 
@@ -399,7 +399,7 @@ if __name__ == "__main__":
         seqhash = dict()
         refseq = ''
 
-        p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq | parallel -k -j '+str(args.t)+' bwa fastmap -l '+str(args.fastmap)+' {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+        p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq | parallel -k -j '+str(args.t)+' bwa fastmap -l '+ ("40" if i == 1 else str(args.fastmap)) +' {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
 
         for l in iter(p1.stdout.readline,''):
             l = l.rstrip()
