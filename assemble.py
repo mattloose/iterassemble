@@ -74,7 +74,7 @@ def assemble (i, id, arr1, args):
         subprocess.call('cat ' + dir + '/iter' + str(i-1) + '_cap3_pass.fasta >> ' + soapout + '.scafSeq', shell=True)
 
 
-    subprocess.call('cap3 ' + soapout + '.scafSeq -k 0 -p 75 -o 30 -h 80 -f 200', shell=True)
+    subprocess.call('cap3 ' + soapout + '.scafSeq -k 0 -p 75 -o 30 -h 80 -f 200 -g 4', shell=True)
 
     cap3 = dir + "/iter" + str(i) + "_cap3.fasta"
     subprocess.call('cat ' + soapout + '.scafSeq.cap.contigs ' + soapout + '.scafSeq.cap.singlets > ' + cap3, shell=True)
