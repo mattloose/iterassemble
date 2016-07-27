@@ -182,7 +182,7 @@ def final_process (args, i, ID):
 
     orderdict = dict()
     revcom = dict()
-    p1 = subprocess.Popen('blastn -db '+passfile+' -query '+args.cDNA+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    p1 = subprocess.Popen('blastn -db '+passfile+' -query '+args.cDNA+' -culling_limit 1 -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
         print l
