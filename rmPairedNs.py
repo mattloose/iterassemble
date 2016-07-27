@@ -29,7 +29,7 @@ if __name__ == '__main__':
             keepr2 = r2
             nextr1 = read1.next()
             nextr2 = read2.next()
-            if N*args.ntimes in str(nextr1.rstrip()) or N*args.ntimes in str(nextr2.rstrip()):
+            if "N"*args.ntimes in str(nextr1.rstrip()) or "N"*args.ntimes in str(nextr2.rstrip()):
                 read1.next()
                 read1.next()
                 read2.next()
