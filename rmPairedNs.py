@@ -18,8 +18,8 @@ if __name__ == '__main__':
 
     args=ParseArg()
 
-    outfile1 = open(args.input1+"_rmN"+args.ntimes,"w")
-    outfile2 = open(args.input2+"_rmN"+args.ntimes,"w")
+    outfile1 = open(args.input1+"_rmN"+str(args.ntimes),"w")
+    outfile2 = open(args.input2+"_rmN"+str(args.ntimes),"w")
 
     linecount = 0
 
