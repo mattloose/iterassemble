@@ -91,118 +91,145 @@ def final_process (args, i, ID):
     print dir
 
     passfile = dir +"/iter" + str(i) + "_cap3_pass.fasta"
-    finalfile = dir +"/final_seq.fasta"
 
-    print len(list(SeqIO.parse(passfile, "fasta")))
-    if (len(list(SeqIO.parse(passfile, "fasta"))) == 1):
-        print "Only one sequence"
-        subprocess.call("cat "+passfile+" | sed 's/^>.*$/>"+ID+"/' > "+finalfile, shell=True)
-        return
+    midfile = dir + "/final_all_seq.fasta"
 
+    finalfile = dir +"/final_one_seq.fasta"
 
-    keep = dict()
+    seqhash = dict()
+    for record in SeqIO.parse(passfile, "fasta"):
+        seqhash[record.name] = record.seq
 
-    tmpfile = dir+"/blasttmp.fa"
-    tmpfile2 = dir+"/blasttmp2.fa"
-    blastres = dict()
     subprocess.call("makeblastdb -dbtype nucl -in "+passfile, shell=True)
 
-    for record in SeqIO.parse(passfile, "fasta"):
-
-        if (i >= 10 and len(str(record.seq)) <= args.remove):
-            print record.id+" is too short"
-            continue
-
-        with open(tmpfile, 'w') as ins:
-            ins.write(">"+record.id+"\n")
-            ins.write(str(record.seq)+"\n")
-        ins.close()
-
-        fail = False
-        # passed = False
-        min = 9999999
-        max = 0
-        last = ""
-        p1 = subprocess.Popen('blastn -db '+passfile+' -query '+tmpfile+" -outfmt '6 std slen'",shell=True,universal_newlines = True, stdout=subprocess.PIPE)
-
-        for l in iter(p1.stdout.readline,''):
-            l = l.rstrip()
-            print l
-            data = l.split("\t")
-            if (data[0] != data[1]):
-                if (data[0] not in blastres):
-                    blastres[data[0]] = dict()
-                if (data[1] not in blastres[data[0]]):
-                    blastres[data[0]][data[1]] = l
-                if (last == ""):
-                    last = data[1]
-                elif(last != data[1]):
-                    min = 9999999
-                    max = 0
-                if (int(data[6]) < min):
-                    min = int(data[6])
-
-                if (int(data[7]) > max):
-                    max = int(data[7])
-
-                # sstart = 0
-                # send = 0
-                # if (int(data[8]) < int(data[9])):
-                #     sstart = int(data[8])
-                #     send = int(data[9])
-                # else:
-                #     sstart = int(data[9])
-                #     send = int(data[8])
-
-                #print "Min: "+str(min)+"\tMax: "+str(max)
-                if (min == 1 and max == len(str(record.seq))):
-                    print "Matches a single hit from start to stop"
-                    fail = True
-
-                # if (sstart == 1 and int(data[6]) > 1):
-                #     print "overlaps left"
-                #     passed = True
-                # if (send == int(data[12]) and int(data[7]) < len(str(record.seq))):
-                #     print "overlaps right"
-                #     passed = True
-
-        if (fail == False):
-            print "keeping "+record.id
-            keep[record.id] = record.seq
-
-    if (len(keep) == 1):
-        print "Only 1 sequence is left!"
-        with open(finalfile, 'w') as ins:
-            for seqid in keep:
-                ins.write(">"+ID+"\n")
-                ins.write(str(keep[seqid])+"\n")
-        ins.close()
-        return
-
-
-    orderdict = dict()
     revcom = dict()
-    p1 = subprocess.Popen('blastn -db '+passfile+' -query '+args.cDNA+' -culling_limit 1 -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    p1 = subprocess.Popen('blastn -db '+passfile+' -query '+args.cDNA+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
         print l
         data = l.split("\t")
-        if (data[0] == ID and data[1] in keep):
-            orderdict[int(data[6])] = data[1]
+        if data[0] == ID:
             if (int(data[8]) > int(data[9])):
                 #print "Reverse"
                 revcom[data[1]] = 1
-    order = []
-    for start in sorted(orderdict):
-        if orderdict[start] not in order:
-            order.append(orderdict[start])
-
-    print order
 
     for seqid in revcom:
         #print "Reversing "+seqid
-        tmpseq = keep[seqid]
-        keep[seqid] = tmpseq.reverse_complement()
+        tmpseq = seqhash[seqid]
+        seqhash[seqid] = tmpseq.reverse_complement()
+
+    if len(seqhash) == 1:
+        print "Only one sequence"
+        with open(finalfile, 'w') as ins:
+            for seqid in seqhash:
+                ins.write(">"+ID+"\n")
+                ins.write(str(seqhash[seqid])+"\n")
+        ins.close()
+        return
+
+    p1 = subprocess.Popen("blastn -query "+passfile+" -db "+passfile+" -outfmt '6 std qlen slen' ", shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+
+    gr = 0
+    groups = dict()
+    alnlen = dict()
+    done = []
+    for l in iter(p1.stdout.readline,''):
+        l = l.rstrip()
+        print l
+        data = l.split("\t")
+        if data[0] != data[1]:
+            if data[0] not in alnlen:
+                alnlen[data[0]] = dict()
+            if data[1] not in alnlen[data[0]]:
+                alnlen[data[0]][data[1]] = 0
+            alnlen[data[0]][data[1]] += int(data[3])
+    for i in alnlen:
+        for i2 in alnlen[i]:
+            print i+"\t"+i2+"\t"+str(alnlen[i][i2])
+            if alnlen[i][i2] > 200:
+                gotit = 0
+                for g in groups:
+                    if i in groups[g] or i2 in groups[g]:
+                        gotit += 1
+                        groups[g][i] = 1
+                        groups[g][i2] = 1
+                if gotit == 0:
+                    gr += 1
+                    groups[gr] = dict()
+                    groups[gr][i] = 1
+                    groups[gr][i2] = 1
+                print "Good to align"
+
+    out = open(midfile, 'w')
+    tmpfile = dir+"/alntmp.fa"
+    keep = dict()
+
+    for g in groups:
+        print "Group"+str(g)
+        with open(tmpfile, 'w') as ins:
+            for i in groups[g]:
+                print "\t"+i
+                ins.write(">"+i+"\n"+str(seqhash[i])+"\n")
+        ins.close()
+
+        muscle_cline = MuscleCommandline(input=tmpfile)
+        stdout, stderr = muscle_cline()
+        align = AlignIO.read(StringIO(stdout), "fasta")
+        print(align)
+
+        summary_align = AlignInfo.SummaryInfo(align)
+        consensus = summary_align.dumb_consensus(ambiguous='N')
+        print str(consensus)
+
+        n = 0
+        for a in str(consensus):
+            if a == "N":
+                n += 1
+        pern = (float(n)/float(len(str(consensus))))*100
+        print "Percent N: "+str(pern)+"%"
+        if pern < 5:
+            for i in groups[g]:
+                done.append(i)
+            out.write(">Group"+str(g)+"\n"+str(consensus)+"\n")
+            keep["Group"+str(g)] = str(consensus)
+
+    for i in seqhash:
+        if i in done:
+            continue
+        out.write(">"+i+"\n"+str(seqhash[i])+"\n")
+        keep[i] = str(seqhash[i])
+
+    out.close()
+
+    if (len(list(SeqIO.parse(midfile, "fasta"))) == 1):
+        print "Only one sequence left"
+        subprocess.call("cat "+midfile+" | sed 's/^>.*$/>"+ID+"/' > "+finalfile, shell=True)
+        return
+
+
+    tmpfile = dir+"/blasttmp.fa"
+    tmpfile2 = dir+"/blasttmp2.fa"
+    subprocess.call("makeblastdb -dbtype nucl -in "+midfile, shell=True)
+
+    orderdict = dict()
+    p1 = subprocess.Popen('blastn -db '+midfile+' -query '+args.cDNA+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    for l in iter(p1.stdout.readline,''):
+        l = l.rstrip()
+        print l
+        data = l.split("\t")
+        if data[0] == ID:
+            if int(data[6]) not in orderdict:
+                orderdict[int(data[6])] = dict()
+            orderdict[int(data[6])][int(data[8])] = data[1]
+    order = []
+    for start in sorted(orderdict):
+        for qstart in sorted(orderdict[start], reverse=True):
+            print orderdict[start][qstart]+"\t"+str(start)+"\t"+str(qstart)
+            if orderdict[start][qstart] not in order:
+                order.append(orderdict[start][qstart])
+
+    print order
+
 
     finalseq = []
     skip = 0
@@ -216,119 +243,70 @@ def final_process (args, i, ID):
             finalseq.append(str(keep[order[a]]))
             break
         print "Current: "+order[a]+"\tNext: "+order[a+1]
-        if order[a] in blastres and order[a+1] in blastres[order[a]]:
-            print "Have a blast result"
+
+        with open(tmpfile, 'w') as ins:
+            ins.write(">"+order[a]+"\n")
+            ins.write(str(keep[order[a]])+"\n")
+        ins.close()
+        with open(tmpfile2, 'w') as ins:
+            ins.write(">"+order[a+1]+"\n")
+            ins.write(str(keep[order[a+1]])+"\n")
+        ins.close()
+
+        isgood = 0
+        min = 9999999
+        max = 0
+
+        p1 = subprocess.Popen('blastn -subject '+tmpfile2+' -query '+tmpfile+' -outfmt 6 -evalue 1e-10',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+        for l in iter(p1.stdout.readline,''):
+            l = l.rstrip()
+            print l
+            data = l.split("\t")
+            if (int(data[7]) >= len(str(keep[order[a]])) - 10):
+                isgood += 1
+            if (int(data[8]) <= 10):
+                isgood += 1
+            if (int(data[6]) < min):
+                min = int(data[6])-1
+            if (int(data[9]) > max):
+                max = int(data[9])
+        if (isgood >= 2):
+            overlap = []
+            print "this is a good overlap, min: "+str(min)+" max: "+str(max)
+            tmpseq = keep[order[a]]
+            # print "First:"
+            # print str(tmpseq)
+            # print str(tmpseq[0:min])
+            # print str(tmpseq[min:len(tmpseq)])
+            overlap.append(tmpseq[min:len(tmpseq)])
+            keep[order[a]] = tmpseq[0:min]
+
+            # print "Second:"
+            tmpseq = keep[order[a+1]]
+            # print str(tmpseq)
+            # print str(tmpseq[0:max])
+            # print str(tmpseq[max:len(tmpseq)])
+            overlap.append(tmpseq[0:max])
+            keep[order[a+1]] = tmpseq[max:len(tmpseq)]
+
             with open(tmpfile, 'w') as ins:
                 ins.write(">"+order[a]+"\n")
-                ins.write(str(keep[order[a]])+"\n")
-            ins.close()
-            with open(tmpfile2, 'w') as ins:
+                ins.write(str(overlap[0])+"\n")
                 ins.write(">"+order[a+1]+"\n")
-                ins.write(str(keep[order[a+1]])+"\n")
+                ins.write(str(overlap[1])+"\n")
             ins.close()
 
-            isgood = 0
-            islong = 0
-            min = 9999999
-            max = 0
+            muscle_cline = MuscleCommandline(input=tmpfile)
+            stdout, stderr = muscle_cline()
+            align = AlignIO.read(StringIO(stdout), "fasta")
+            print(align)
+            summary_align = AlignInfo.SummaryInfo(align)
+            consensus = summary_align.dumb_consensus(ambiguous='N')
+            print str(consensus)
 
-            p1 = subprocess.Popen('blastn -task blastn -subject '+tmpfile2+' -query '+tmpfile+' -outfmt 6 -evalue 1e-10',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
-            for l in iter(p1.stdout.readline,''):
-                l = l.rstrip()
-                print l
-                data = l.split("\t")
-                if (data[2] >= 90 and int(data[3]) >= 100):
-                    islong += 1
-                if (int(data[7]) >= len(str(keep[order[a]])) - 5):
-                    isgood += 1
-                if (int(data[8]) <= 5):
-                    isgood += 1
-                if (int(data[6]) < min):
-                    min = int(data[6])-1
-                if (int(data[9]) > max):
-                    max = int(data[9])
-            if (isgood >= 2):
-                overlap = []
-                print "this is a good overlap, min: "+str(min)+" max: "+str(max)
-                tmpseq = keep[order[a]]
-                # print "First:"
-                # print str(tmpseq)
-                # print str(tmpseq[0:min])
-                # print str(tmpseq[min:len(tmpseq)])
-                overlap.append(tmpseq[min:len(tmpseq)])
-                keep[order[a]] = tmpseq[0:min]
+            finalseq.append(str(keep[order[a]]))
+            finalseq.append(str(consensus))
 
-                # print "Second:"
-                tmpseq = keep[order[a+1]]
-                # print str(tmpseq)
-                # print str(tmpseq[0:max])
-                # print str(tmpseq[max:len(tmpseq)])
-                overlap.append(tmpseq[0:max])
-                keep[order[a+1]] = tmpseq[max:len(tmpseq)]
-
-                with open(tmpfile, 'w') as ins:
-                    ins.write(">"+order[a]+"\n")
-                    ins.write(str(overlap[0])+"\n")
-                    ins.write(">"+order[a+1]+"\n")
-                    ins.write(str(overlap[1])+"\n")
-                ins.close()
-
-                muscle_cline = MuscleCommandline(input=tmpfile)
-                stdout, stderr = muscle_cline()
-                align = AlignIO.read(StringIO(stdout), "fasta")
-                print(align)
-                summary_align = AlignInfo.SummaryInfo(align)
-                consensus = summary_align.dumb_consensus(ambiguous='N')
-                print str(consensus)
-
-                finalseq.append(str(keep[order[a]]))
-                finalseq.append(str(consensus))
-
-            else:
-                if (islong > 0):
-                    print "Not full length, but has long high quality alignment. Will try to generate consensus across whole length"
-
-                    with open(tmpfile, 'w') as ins:
-                        ins.write(">"+order[a]+"\n")
-                        ins.write(str(keep[order[a]])+"\n")
-                        ins.write(">"+order[a+1]+"\n")
-                        ins.write(str(keep[order[a+1]])+"\n")
-                    ins.close()
-
-                    muscle_cline = MuscleCommandline(input=tmpfile)
-                    stdout, stderr = muscle_cline()
-                    align = AlignIO.read(StringIO(stdout), "fasta")
-                    print(align)
-                    A=list(align[0])
-                    B=list(align[1])
-                    count=0
-                    gaps=0
-                    for n in range(0, len(A)):
-                        if A[n]==B[n]:
-                            if A[n]!="-":
-                                count=count+1
-                            else:
-                                gaps=gaps+1
-                    perid = 100*(count/float((len(A)-gaps)))
-                    print perid
-                    if perid < 70:
-                        print "Assuming this is a repeat, will leave seperate"
-                        finalseq.append(str(keep[order[a]]))
-                        finalseq.append("N"*500)
-                        continue
-                    summary_align = AlignInfo.SummaryInfo(align)
-                    consensus = summary_align.dumb_consensus(ambiguous='N')
-                    print str(consensus)
-
-                    keep[order[a+1]] = consensus
-
-                    # finalseq.append(str(consensus))
-                    # skip = 1
-
-                else:
-                    print "Assuming this is a repeat, will leave seperate"
-                    finalseq.append(str(keep[order[a]]))
-                    finalseq.append("N"*500)
         else:
             print "No overlap!"
             finalseq.append(str(keep[order[a]]))
