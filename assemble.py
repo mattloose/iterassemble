@@ -127,26 +127,50 @@ def final_process (args, i, ID):
         ins.close()
         return
 
-    p1 = subprocess.Popen("blastn -query "+passfile+" -db "+passfile+" -outfmt '6 std qlen slen' ", shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    p1 = subprocess.Popen("blastn -query "+passfile+" -db "+passfile+" -perc_identity 95 -outfmt '6 std qlen slen' ", shell=True,universal_newlines = True, stdout=subprocess.PIPE)
 
     gr = 0
     groups = dict()
-    alnlen = dict()
+    infodict = dict()
     done = []
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
         print l
         data = l.split("\t")
         if data[0] != data[1]:
-            if data[0] not in alnlen:
-                alnlen[data[0]] = dict()
-            if data[1] not in alnlen[data[0]]:
-                alnlen[data[0]][data[1]] = 0
-            alnlen[data[0]][data[1]] += int(data[3])
-    for i in alnlen:
-        for i2 in alnlen[i]:
-            print i+"\t"+i2+"\t"+str(alnlen[i][i2])
-            if alnlen[i][i2] > 200:
+            if data[0] not in infodict:
+                infodict[data[0]] = dict()
+            if data[1] not in infodict[data[0]]:
+                infodict[data[0]][data[1]] = dict()
+            infodict[data[0]][data[1]]['qlen'] = int(data[12])
+            infodict[data[0]][data[1]]['slen'] = int(data[13])
+            if 'alen' not in infodict[data[0]][data[1]]:
+                infodict[data[0]][data[1]]['alen'] = 0
+            infodict[data[0]][data[1]]['alen'] += int(data[3])
+            if 'qmin' not in infodict[data[0]][data[1]] or int(data[6]) < infodict[data[0]][data[1]]['qmin']:
+                infodict[data[0]][data[1]]['qmin'] = int(data[6])
+            if 'qmax' not in infodict[data[0]][data[1]] or int(data[7]) > infodict[data[0]][data[1]]['qmax']:
+                infodict[data[0]][data[1]]['qmax'] = int(data[7])
+            if int(data[8]) < int(data[9]):
+                if 'smin' not in infodict[data[0]][data[1]] or int(data[8]) < infodict[data[0]][data[1]]['smin']:
+                    infodict[data[0]][data[1]]['smin'] = int(data[8])
+                if 'smax' not in infodict[data[0]][data[1]] or int(data[9]) > infodict[data[0]][data[1]]['smax']:
+                    infodict[data[0]][data[1]]['smax'] = int(data[9])
+            else:
+                if 'smin' not in infodict[data[0]][data[1]] or int(data[9]) < infodict[data[0]][data[1]]['smin']:
+                    infodict[data[0]][data[1]]['smin'] = int(data[9])
+                if 'smax' not in infodict[data[0]][data[1]] or int(data[8]) > infodict[data[0]][data[1]]['smax']:
+                    infodict[data[0]][data[1]]['smax'] = int(data[8])
+    for i in infodict:
+        for i2 in infodict[i]:
+            print i+"\t"+i2+"\t"+str(infodict[i][i2]['alen'])
+            if infodict[i][i2]['qmin'] < 500 and (infodict[i][i2]['smin'] < 500 or infodict[i][i2]['smax'] > infodict[i][i2]['slen']-500):
+                print "At start of query, and end/start of subject"
+                continue
+            if infodict[i][i2]['qmax'] > infodict[i][i2]['qlen']-500 and (infodict[i][i2]['smin'] < 500 or infodict[i][i2]['smax'] > infodict[i][i2]['slen']-500):
+                print "At end of query, and end/start of subject"
+                continue
+            if infodict[i][i2]['alen'] >= infodict[i][i2]['qlen']/2 or infodict[i][i2]['alen'] >= infodict[i][i2]['slen']/2:
                 gotit = 0
                 for g in groups:
                     if i in groups[g] or i2 in groups[g]:
@@ -468,7 +492,7 @@ if __name__ == "__main__":
     #     subprocess.call("rm "+finalfa, shell=True)
     # for ID in ids:
         #if ID in final:
-    subprocess.call("cat *_files/final_seq.fasta > "+finalfa, shell=True)
+    subprocess.call("cat *_files/final_one_seq.fasta > "+finalfa, shell=True)
         #else:
         #    subprocess.call("cat "+ID+"_files/iter"+str(args.m)+"_cap3_pass.fasta | sed 's/^>/>"+ID+"_/' >> "+finalfa, shell=True)
 
