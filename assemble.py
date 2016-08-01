@@ -286,9 +286,9 @@ def final_process (args, i, ID):
             l = l.rstrip()
             print l
             data = l.split("\t")
-            if (int(data[7]) >= len(str(keep[order[a]])) - 10):
+            if (int(data[7]) >= len(str(keep[order[a]])) - 500):
                 isgood += 1
-            if (int(data[8]) <= 10):
+            if (int(data[8]) <= 500):
                 isgood += 1
             if (int(data[6]) < min):
                 min = int(data[6])-1
@@ -303,7 +303,7 @@ def final_process (args, i, ID):
             # print str(tmpseq[0:min])
             # print str(tmpseq[min:len(tmpseq)])
             overlap.append(tmpseq[min:len(tmpseq)])
-            keep[order[a]] = tmpseq[0:min]
+            #keep[order[a]] = tmpseq[0:min]
 
             # print "Second:"
             tmpseq = keep[order[a+1]]
@@ -311,7 +311,7 @@ def final_process (args, i, ID):
             # print str(tmpseq[0:max])
             # print str(tmpseq[max:len(tmpseq)])
             overlap.append(tmpseq[0:max])
-            keep[order[a+1]] = tmpseq[max:len(tmpseq)]
+            #keep[order[a+1]] = tmpseq[max:len(tmpseq)]
 
             with open(tmpfile, 'w') as ins:
                 ins.write(">"+order[a]+"\n")
@@ -328,8 +328,22 @@ def final_process (args, i, ID):
             consensus = summary_align.dumb_consensus(ambiguous='N')
             print str(consensus)
 
-            finalseq.append(str(keep[order[a]]))
-            finalseq.append(str(consensus))
+            n = 0
+            for a in str(consensus):
+                if a == "N":
+                    n += 1
+            pern = (float(n)/float(len(str(consensus))))*100
+            print "Percent N: "+str(pern)+"%"
+
+            if pern < 5:
+                keep[order[a]] = tmpseq[0:min]
+                keep[order[a+1]] = tmpseq[max:len(tmpseq)]
+                finalseq.append(str(keep[order[a]]))
+                finalseq.append(str(consensus))
+            else:
+                print "Overlap not good enough"
+                finalseq.append(str(keep[order[a]]))
+                finalseq.append("N"*500)
 
         else:
             print "No overlap!"
