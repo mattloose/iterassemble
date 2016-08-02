@@ -329,8 +329,8 @@ def final_process (args, i, ID):
             print str(consensus)
 
             n = 0
-            for a in str(consensus):
-                if a == "N":
+            for c in str(consensus):
+                if c == "N":
                     n += 1
             pern = (float(n)/float(len(str(consensus))))*100
             print "Percent N: "+str(pern)+"%"
