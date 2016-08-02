@@ -164,10 +164,10 @@ def final_process (args, i, ID):
     for i in infodict:
         for i2 in infodict[i]:
             print i+"\t"+i2+"\t"+str(infodict[i][i2]['alen'])
-            if infodict[i][i2]['qmin'] < 500 and (infodict[i][i2]['smin'] < 500 or infodict[i][i2]['smax'] > infodict[i][i2]['slen']-500):
+            if infodict[i][i2]['qmin'] < 500 and infodict[i][i2]['qmax'] < infodict[i][i2]['qlen']-500 and (infodict[i][i2]['smin'] < 500 or infodict[i][i2]['smax'] > infodict[i][i2]['slen']-500):
                 print "At start of query, and end/start of subject"
                 continue
-            if infodict[i][i2]['qmax'] > infodict[i][i2]['qlen']-500 and (infodict[i][i2]['smin'] < 500 or infodict[i][i2]['smax'] > infodict[i][i2]['slen']-500):
+            if infodict[i][i2]['qmax'] > infodict[i][i2]['qlen']-500 and infodict[i][i2]['qmin'] > 500 and (infodict[i][i2]['smin'] < 500 or infodict[i][i2]['smax'] > infodict[i][i2]['slen']-500):
                 print "At end of query, and end/start of subject"
                 continue
             if infodict[i][i2]['alen'] >= infodict[i][i2]['qlen']/2 or infodict[i][i2]['alen'] >= infodict[i][i2]['slen']/2:
