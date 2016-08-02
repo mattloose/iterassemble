@@ -278,8 +278,8 @@ def final_process (args, i, ID):
         ins.close()
 
         isgood = 0
-        min = 9999999
-        max = 0
+        smin = 9999999
+        smax = 0
 
         p1 = subprocess.Popen('blastn -subject '+tmpfile2+' -query '+tmpfile+' -outfmt 6 -evalue 1e-10',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
         for l in iter(p1.stdout.readline,''):
@@ -290,19 +290,19 @@ def final_process (args, i, ID):
                 isgood += 1
             if (int(data[8]) <= 500):
                 isgood += 1
-            if (int(data[6]) < min):
-                min = int(data[6])-1
-            if (int(data[9]) > max):
-                max = int(data[9])
+            if (int(data[6]) < smin):
+                smin = int(data[6])-1
+            if (int(data[9]) > smax):
+                smax = int(data[9])
         if (isgood >= 2):
             overlap = []
-            print "this is a good overlap, min: "+str(min)+" max: "+str(max)
+            print "this is a good overlap, min: "+str(smin)+" max: "+str(smax)
             tmpseq = keep[order[a]]
             # print "First:"
             # print str(tmpseq)
             # print str(tmpseq[0:min])
             # print str(tmpseq[min:len(tmpseq)])
-            overlap.append(tmpseq[min:len(tmpseq)])
+            overlap.append(tmpseq[smin:len(tmpseq)])
             #keep[order[a]] = tmpseq[0:min]
 
             # print "Second:"
@@ -310,7 +310,7 @@ def final_process (args, i, ID):
             # print str(tmpseq)
             # print str(tmpseq[0:max])
             # print str(tmpseq[max:len(tmpseq)])
-            overlap.append(tmpseq[0:max])
+            overlap.append(tmpseq[0:smax])
             #keep[order[a+1]] = tmpseq[max:len(tmpseq)]
 
             with open(tmpfile, 'w') as ins:
@@ -336,8 +336,10 @@ def final_process (args, i, ID):
             print "Percent N: "+str(pern)+"%"
 
             if pern < 5:
-                keep[order[a]] = tmpseq[0:min]
-                keep[order[a+1]] = tmpseq[max:len(tmpseq)]
+                tmpseq = keep[order[a]]
+                keep[order[a]] = tmpseq[0:smin]
+                tmpseq = keep[order[a+1]]
+                keep[order[a+1]] = tmpseq[smax:len(tmpseq)]
                 finalseq.append(str(keep[order[a]]))
                 finalseq.append(str(consensus))
             else:
