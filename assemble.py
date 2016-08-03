@@ -188,8 +188,14 @@ def final_process (args, i, ID):
 
     for g in groups:
         print "Group"+str(g)
+
+        ids = dict()
+        for i in groups[g]:
+            ids[i.split("+")[0]] = 1
+            ids[i.split("+")[1]] = 1
+
         with open(tmpfile, 'w') as ins:
-            for i in groups[g]:
+            for i in ids:
                 print "\t"+i
                 ins.write(">"+i+"\n"+str(seqhash[i])+"\n")
         ins.close()
