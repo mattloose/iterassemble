@@ -216,9 +216,93 @@ def final_process (args, i, ID):
                 done.append(i)
             out.write(">Group"+str(g)+"\n"+str(consensus)+"\n")
             keep["Group"+str(g)] = str(consensus)
+            continue
+
+        print "Couldn't align all seq together, so doing it one at a time"
+        alnorder = []
+        aord = dict()
+        conhash = dict()
+        concount = 0
+        for i in groups[g]:
+            print "\t"+i+"\t"+str(groups[g][i])
+            aord[groups[g][i]] = i
+        for al in sorted(aord, reverse=True):
+            print str(al)+"\t"+aord[al]
+            alnorder.append(aord[al])
+
+        newseq  = dict()
+
+        for p in range(0,len(alnorder)):
+            print "Aligning "+alnorder[p]
+            i,i2 = alnorder[p].split("+")
+
+            if i in conhash and i2 not in conhash:
+                print "Adding to "+conhash[i]
+                i = conhash[i]
+            elif i2 in conhash and i not in conhash:
+                print "Adding to "+conhash[i2]
+                i2 = conhash[i2]
+            elif i in conhash and i2 in conhash:
+                print "Repeat!"
+                continue
+            with open(tmpfile, 'w') as ins:
+                print "\t"+i+"\t"+i2
+                ins.write(">"+i+"\n"+str(seqhash[i])+"\n")
+                ins.write(">"+i2+"\n"+str(seqhash[i2])+"\n")
+            ins.close()
+
+            muscle_cline = MuscleCommandline(input=tmpfile)
+            stdout, stderr = muscle_cline()
+            align = AlignIO.read(StringIO(stdout), "fasta")
+            print(align)
+
+            summary_align = AlignInfo.SummaryInfo(align)
+            consensus = summary_align.dumb_consensus(ambiguous='N')
+            print str(consensus)
+
+            count = 0
+            n = 0
+            for a in str(consensus):
+                if a == "N":
+                    n += 1
+                count += 1
+            print n
+            print count
+            pern = (float(n)/float(count))*100
+            print pern
+            print "Percent N: "+str(pern)+"%"
+            if pern < 5:
+                if "Consensus" not in i and "Consensus" not in i2:
+                    concount += 1
+                if "Consensus" in i and "Consensus" in i2:
+                    print "Aligned two consensus seq"
+                    c1 = [int(s) for s in i.split() if s.isdigit()]
+                    c2 = [int(s) for s in i2.split() if s.isdigit()]
+                    print str(c1)+"\t"+str(c2)
+                    concount += 1
+                    newseq.pop(c1, None)
+                    newseq.pop(c2, None)
+                conhash[i] = "Consensus"+str(concount)
+                conhash[i2] = "Consensus"+str(concount)
+                seqhash["Consensus"+str(concount)] = consensus
+                if concount not in newseq:
+                    newseq[concount] = dict()
+                    newseq[concount]['seq'] = consensus
+                    newseq[concount]['ids'] = []
+                newseq[concount]['seq'] = consensus
+                newseq[concount]['ids'].append(i)
+                newseq[concount]['ids'].append(i2)
+
+        part = 0
+        last = ""
+        for c in newseq:
+            for i in newseq[c]['ids']:
+                done.append(i)
+            out.write(">Group"+str(g)+"_"+str(c)+"\n"+str(newseq[c]['seq'])+"\n")
+            keep["Group"+str(g)+"_"+str(c)] = str(newseq[c]['seq'])
 
     for i in seqhash:
-        if i in done:
+        if i in done or "Consensus" in i:
             continue
         out.write(">"+i+"\n"+str(seqhash[i])+"\n")
         keep[i] = str(seqhash[i])
@@ -335,7 +419,7 @@ def final_process (args, i, ID):
             pern = (float(n)/float(len(str(consensus))))*100
             print "Percent N: "+str(pern)+"%"
 
-            if pern < 5:
+            if pern < 15:
                 tmpseq = keep[order[a]]
                 keep[order[a]] = tmpseq[0:smin]
                 tmpseq = keep[order[a+1]]
