@@ -224,7 +224,7 @@ def final_process (args, i, ID):
 
         if len(ids) == 2:
             continue
-            
+
         print "Couldn't align all seq together, so doing it one at a time"
         alnorder = []
         aord = dict()
@@ -357,15 +357,23 @@ def final_process (args, i, ID):
             print "Last one"
             finalseq.append(str(keep[order[a]]))
             break
-        print "Current: "+order[a]+"\tNext: "+order[a+1]
+
+        b = a+1
+
+        print "Current: "+order[a]+"\tNext: "+order[b]
+
+        if len(keep[order[a]]) == 0:
+            print "No sequence, rewinding!"
+            a -= 1
+            print "Now: "+order[a]+"\tNext: "+order[b]
 
         with open(tmpfile, 'w') as ins:
             ins.write(">"+order[a]+"\n")
             ins.write(str(keep[order[a]])+"\n")
         ins.close()
         with open(tmpfile2, 'w') as ins:
-            ins.write(">"+order[a+1]+"\n")
-            ins.write(str(keep[order[a+1]])+"\n")
+            ins.write(">"+order[b]+"\n")
+            ins.write(str(keep[order[b]])+"\n")
         ins.close()
 
         isgood = 0
@@ -397,7 +405,7 @@ def final_process (args, i, ID):
             #keep[order[a]] = tmpseq[0:min]
 
             # print "Second:"
-            tmpseq = keep[order[a+1]]
+            tmpseq = keep[order[b]]
             # print str(tmpseq)
             # print str(tmpseq[0:max])
             # print str(tmpseq[max:len(tmpseq)])
@@ -407,7 +415,7 @@ def final_process (args, i, ID):
             with open(tmpfile, 'w') as ins:
                 ins.write(">"+order[a]+"\n")
                 ins.write(str(overlap[0])+"\n")
-                ins.write(">"+order[a+1]+"\n")
+                ins.write(">"+order[b]+"\n")
                 ins.write(str(overlap[1])+"\n")
             ins.close()
 
@@ -428,11 +436,11 @@ def final_process (args, i, ID):
 
             if pern < 15:
                 tmpseq = keep[order[a]]
-                keep[order[a]] = tmpseq[0:smin]
-                tmpseq = keep[order[a+1]]
-                keep[order[a+1]] = tmpseq[smax:len(tmpseq)]
+                keep[order[a]] = tmpseq[0:smin] + consensus
+                tmpseq = keep[order[b]]
+                keep[order[b]] = tmpseq[smax:len(tmpseq)]
                 finalseq.append(str(keep[order[a]]))
-                finalseq.append(str(consensus))
+                # finalseq.append(str(consensus))
             else:
                 print "Overlap not good enough"
                 finalseq.append(str(keep[order[a]]))
@@ -447,6 +455,9 @@ def final_process (args, i, ID):
         ins.write(">"+ID+"\n")
         ins.write("".join(finalseq)+"\n")
     ins.close()
+
+
+
 
 def split_index (args):
     if os.path.exists(args.d):
