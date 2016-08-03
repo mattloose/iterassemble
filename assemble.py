@@ -173,15 +173,13 @@ def final_process (args, i, ID):
             if infodict[i][i2]['alen'] >= infodict[i][i2]['qlen']/2 or infodict[i][i2]['alen'] >= infodict[i][i2]['slen']/2:
                 gotit = 0
                 for g in groups:
-                    if i in groups[g] or i2 in groups[g]:
+                    if [(k, v) for (k, v) in groups[g].iteritems() if i in k]:
                         gotit += 1
-                        groups[g][i] = 1
-                        groups[g][i2] = 1
+                        groups[g][i+"+"+i2] = infodict[i][i2]['alen']
                 if gotit == 0:
                     gr += 1
                     groups[gr] = dict()
-                    groups[gr][i] = 1
-                    groups[gr][i2] = 1
+                    groups[gr][i+"+"+i2] = infodict[i][i2]['alen']
                 print "Good to align"
 
     out = open(midfile, 'w')
