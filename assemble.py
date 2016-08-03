@@ -222,6 +222,9 @@ def final_process (args, i, ID):
             keep["Group"+str(g)] = str(consensus)
             continue
 
+        if len(ids) == 2:
+            continue
+            
         print "Couldn't align all seq together, so doing it one at a time"
         alnorder = []
         aord = dict()
