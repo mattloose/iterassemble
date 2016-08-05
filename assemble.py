@@ -90,7 +90,15 @@ def final_process (args, i, ID):
     dir = ID + "_files"
     print dir
 
-    passfile = dir +"/iter" + str(i) + "_cap3_pass.fasta"
+    infile = dir +"/iter" + str(i) + "_cap3_pass.fasta"
+    passfile = dir +"/iter" + str(i) + "_cap3_pass.fasta.renamed"
+
+    sc = 0
+    with open(passfile, 'w') as ins:
+        for record in SeqIO.parse(infile, "fasta"):
+            sc += 1
+            ins.write(">Contig"+str(sc)+"\n"+str(record.seq)+"\n")
+    ins.close()
 
     midfile = dir + "/final_all_seq.fasta"
 
@@ -216,7 +224,7 @@ def final_process (args, i, ID):
         pern = (float(n)/float(len(str(consensus))))*100
         print "Percent N: "+str(pern)+"%"
         if pern < 5:
-            for i in groups[g]:
+            for i in ids:
                 done.append(i)
             out.write(">Group"+str(g)+"\n"+str(consensus)+"\n")
             keep["Group"+str(g)] = str(consensus)
