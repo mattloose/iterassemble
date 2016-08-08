@@ -208,8 +208,10 @@ def final_process (args, i, ID):
                 ins.write(">"+i+"\n"+str(seqhash[i])+"\n")
         ins.close()
 
-        muscle_cline = MuscleCommandline(input=tmpfile)
-        stdout, stderr = muscle_cline()
+        p1 = subprocess.Popen("mafft --auto "+tmpfile, shell=True, universal_newlines = True, stdout=subprocess.PIPE)
+
+        # muscle_cline = MuscleCommandline(input=tmpfile)
+        stdout, stderr = p1.communicate()
         align = AlignIO.read(StringIO(stdout), "fasta")
         print(align)
 
@@ -266,8 +268,10 @@ def final_process (args, i, ID):
                 ins.write(">"+i2+"\n"+str(seqhash[i2])+"\n")
             ins.close()
 
-            muscle_cline = MuscleCommandline(input=tmpfile)
-            stdout, stderr = muscle_cline()
+            p1 = subprocess.Popen("mafft --auto "+tmpfile, shell=True, universal_newlines = True, stdout=subprocess.PIPE)
+
+            #muscle_cline = MuscleCommandline(input=tmpfile)
+            stdout, stderr = p1.communicate()
             align = AlignIO.read(StringIO(stdout), "fasta")
             print(align)
 
@@ -427,8 +431,10 @@ def final_process (args, i, ID):
                 ins.write(str(overlap[1])+"\n")
             ins.close()
 
-            muscle_cline = MuscleCommandline(input=tmpfile)
-            stdout, stderr = muscle_cline()
+            p1 = subprocess.Popen("mafft --auto "+tmpfile, shell=True, universal_newlines = True, stdout=subprocess.PIPE)
+
+            #muscle_cline = MuscleCommandline(input=tmpfile)
+            stdout, stderr = p1.communicate()
             align = AlignIO.read(StringIO(stdout), "fasta")
             print(align)
             summary_align = AlignInfo.SummaryInfo(align)
