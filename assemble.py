@@ -217,10 +217,10 @@ def final_process (args, i, ID):
 
         summary_align = AlignInfo.SummaryInfo(align)
         consensus = summary_align.dumb_consensus(ambiguous='N')
-        print str(consensus)
+        print str(consensus).upper()
 
         n = 0
-        for a in str(consensus):
+        for a in str(consensus).upper():
             if a == "N":
                 n += 1
         pern = (float(n)/float(len(str(consensus))))*100
@@ -228,8 +228,8 @@ def final_process (args, i, ID):
         if pern < 5:
             for i in ids:
                 done.append(i)
-            out.write(">Group"+str(g)+"\n"+str(consensus)+"\n")
-            keep["Group"+str(g)] = str(consensus)
+            out.write(">Group"+str(g)+"\n"+str(consensus).upper()+"\n")
+            keep["Group"+str(g)] = str(consensus).upper()
             continue
 
         if len(ids) == 2:
@@ -277,17 +277,14 @@ def final_process (args, i, ID):
 
             summary_align = AlignInfo.SummaryInfo(align)
             consensus = summary_align.dumb_consensus(ambiguous='N')
-            print str(consensus)
+            print str(consensus).upper()
 
-            count = 0
             n = 0
-            for a in str(consensus):
+            for a in str(consensus).upper():
                 if a == "N":
                     n += 1
-                count += 1
             print n
-            print count
-            pern = (float(n)/float(count))*100
+            pern = (float(n)/float(len(str(consensus))))*100
             print pern
             print "Percent N: "+str(pern)+"%"
             if pern < 5:
@@ -317,8 +314,8 @@ def final_process (args, i, ID):
         for c in newseq:
             for i in newseq[c]['ids']:
                 done.append(i)
-            out.write(">Group"+str(g)+"_"+str(c)+"\n"+str(newseq[c]['seq'])+"\n")
-            keep["Group"+str(g)+"_"+str(c)] = str(newseq[c]['seq'])
+            out.write(">Group"+str(g)+"_"+str(c)+"\n"+str(newseq[c]['seq']).upper()+"\n")
+            keep["Group"+str(g)+"_"+str(c)] = str(newseq[c]['seq']).upper()
 
     for i in seqhash:
         if i in done or "Consensus" in i:
@@ -439,10 +436,10 @@ def final_process (args, i, ID):
             print(align)
             summary_align = AlignInfo.SummaryInfo(align)
             consensus = summary_align.dumb_consensus(ambiguous='N')
-            print str(consensus)
+            print str(consensus).upper()
 
             n = 0
-            for c in str(consensus):
+            for c in str(consensus).upper():
                 if c == "N":
                     n += 1
             pern = (float(n)/float(len(str(consensus))))*100
@@ -453,7 +450,7 @@ def final_process (args, i, ID):
                 keep[order[a]] = tmpseq[0:smin] + consensus
                 tmpseq = keep[order[b]]
                 keep[order[b]] = tmpseq[smax:len(tmpseq)]
-                finalseq.append(str(keep[order[a]]))
+                finalseq.append(str(keep[order[a]]).upper())
                 # finalseq.append(str(consensus))
             else:
                 print "Overlap not good enough"
