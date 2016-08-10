@@ -181,7 +181,7 @@ def final_process (args, i, ID):
             if infodict[i][i2]['alen'] >= infodict[i][i2]['qlen']/2 or infodict[i][i2]['alen'] >= infodict[i][i2]['slen']/2:
                 gotit = 0
                 for g in groups:
-                    if [(k, v) for (k, v) in groups[g].iteritems() if i in k]:
+                    if [(k, v) for (k, v) in groups[g].iteritems() if i in k or i2 in k]:
                         gotit += 1
                         groups[g][i+"+"+i2] = infodict[i][i2]['alen']
                 if gotit == 0:
