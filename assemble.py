@@ -554,7 +554,12 @@ if __name__ == "__main__":
 
         new = dict()
 
-        idres = [pool.apply_async(assemble, args=(i,ID,seqhash[ID],args)) for ID in ids if ID not in final and ID in seqhash]
+        if i == 1:
+            for ID in ids:
+                if ID not in seqhash:
+                    final[ID] = 0
+
+        idres = [pool.apply_async(assemble, args=(i,ID,seqhash[ID],args)) for ID in ids if ID not in final]
         idoutput = [p.get() for p in idres]
         #print idoutput
 
