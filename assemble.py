@@ -3,6 +3,7 @@ import subprocess
 import sys, getopt, argparse
 import re
 import os.path
+import glob
 import multiprocessing as mp
 from Bio import SeqIO
 import atexit
@@ -503,6 +504,7 @@ if __name__ == "__main__":
     parser.add_argument('-e','--endsize', nargs='?', metavar='INT', default=600, type=int, help='Number of bases from each end of the contigs to map (default: %(default)s)')
     parser.add_argument('-r','--remove', nargs='?', metavar='INT', default=200, type=int, help='After 10 iterations, remove contigs shorter than INT (default: %(default)s)')
     parser.add_argument('-f','--fastmap', nargs='?', metavar='INT', default=60, type=int, help='Minimum SMEM length permited in bwa fastmap (default: %(default)s)')
+    parser.add_argument('--end_process_only', action='store_true', help='No iterative assembly will be performed, just the end process based on existing files (default: %(default)s)')
 
     args = parser.parse_args()
 
@@ -526,97 +528,111 @@ if __name__ == "__main__":
     last = dict()
     final = dict()
 
-    for i in range(1,args.m+1):
+    if args.end_process_only:
+        print "Will look at pre-existing files"
+        for ID in ids:
+            if os.path.exists(ID + "_files/iter" + str(args.m) + "_cap3_pass.fasta"):
+                final[ID] = args.m
+            elif not os.path.exists(ID+"_files/iter1_cap3_pass.fasta") or os.path.getsize(ID+"_files/iter1_cap3_pass.fasta") == 0:
+                final[ID] = 0
+            else:
+                f = glob.glob(ID+"_files/*_cap3_pass.fasta")
+                print f
+                penultimate = sorted(f)[:-2]
+                print penultimate
+                print penultimate[len(ID)+11:-16]
+    else:
+        for i in range(1,args.m+1):
 
-        seqhash = dict()
-        refseq = ''
+            seqhash = dict()
+            refseq = ''
 
-        p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq | parallel -k -j '+str(args.t)+' bwa fastmap -l '+ ("40" if i == 1 else str(args.fastmap)) +' {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+            p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq | parallel -k -j '+str(args.t)+' bwa fastmap -l '+ ("40" if i == 1 else str(args.fastmap)) +' {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
 
-        for l in iter(p1.stdout.readline,''):
-            l = l.rstrip()
-            data = l.split("\t")
-            if re.match("SQ", l):
-                refseq = data[1]
-                refseq = re.sub("_contig.*$","",refseq)
-            elif re.match("EM", l):
-                for a in range(4,len(data)):
-                    id = data[a]
-                    if (id == '*'):
+            for l in iter(p1.stdout.readline,''):
+                l = l.rstrip()
+                data = l.split("\t")
+                if re.match("SQ", l):
+                    refseq = data[1]
+                    refseq = re.sub("_contig.*$","",refseq)
+                elif re.match("EM", l):
+                    for a in range(4,len(data)):
+                        id = data[a]
+                        if (id == '*'):
+                            continue
+                        id = re.sub(":.*$","",id)
+                        id = re.sub("/\d$","",id)
+                        if refseq not in seqhash:
+                            seqhash[refseq] = []
+                        seqhash[refseq].append(id)
+
+
+
+            new = dict()
+
+            if i == 1:
+                for ID in ids:
+                    if ID not in seqhash:
+                        final[ID] = 0
+
+            idres = [pool.apply_async(assemble, args=(i,ID,seqhash[ID],args)) for ID in ids if ID not in final]
+            idoutput = [p.get() for p in idres]
+            #print idoutput
+
+            for ID in idoutput:
+                seqsum = 0
+                maxseq = 0
+                seqcount = 0
+                for record in SeqIO.parse(ID + "_files/iter" + str(i) + "_cap3_pass.fasta", "fasta"):
+                    seqcount += 1
+                    seqsum += len(str(record.seq))
+                    if len(str(record.seq)) > maxseq:
+                        maxseq = len(str(record.seq))
+                    if ID not in new:
+                        new[ID] = dict()
+                    new[ID][seqcount] = str(record.seq)
+                print ID + "\t" + str(seqcount) + "\t" + str(maxseq) + "\t" + str(seqsum)
+                if ID not in last:
+                    if seqsum == 0:
+                        print "No bases for "+ID+", exiting"
+                        final[ID] = i-1
                         continue
-                    id = re.sub(":.*$","",id)
-                    id = re.sub("/\d$","",id)
-                    if refseq not in seqhash:
-                        seqhash[refseq] = []
-                    seqhash[refseq].append(id)
-
-
-
-        new = dict()
-
-        if i == 1:
-            for ID in ids:
-                if ID not in seqhash:
-                    final[ID] = 0
-
-        idres = [pool.apply_async(assemble, args=(i,ID,seqhash[ID],args)) for ID in ids if ID not in final]
-        idoutput = [p.get() for p in idres]
-        #print idoutput
-
-        for ID in idoutput:
-            seqsum = 0
-            maxseq = 0
-            seqcount = 0
-            for record in SeqIO.parse(ID + "_files/iter" + str(i) + "_cap3_pass.fasta", "fasta"):
-                seqcount += 1
-                seqsum += len(str(record.seq))
-                if len(str(record.seq)) > maxseq:
-                    maxseq = len(str(record.seq))
-                if ID not in new:
-                    new[ID] = dict()
-                new[ID][seqcount] = str(record.seq)
-            print ID + "\t" + str(seqcount) + "\t" + str(maxseq) + "\t" + str(seqsum)
-            if ID not in last:
-                if seqsum == 0:
-                    print "No bases for "+ID+", exiting"
+                    last[ID] = dict()
+                    last[ID]['sum'] = seqsum
+                    last[ID]['max'] = maxseq
+                    last[ID]['count'] = seqcount
+                elif (last[ID]['sum'] >= seqsum and last[ID]['max'] >= maxseq) or (seqcount >= last[ID]['count']*3 and i > 2):
+                    print "Haven't increased the total or max bp, or tripled the number of contigs for "+ID+", exiting"
                     final[ID] = i-1
                     continue
-                last[ID] = dict()
                 last[ID]['sum'] = seqsum
                 last[ID]['max'] = maxseq
                 last[ID]['count'] = seqcount
-            elif (last[ID]['sum'] >= seqsum and last[ID]['max'] >= maxseq) or (seqcount >= last[ID]['count']*3 and i > 2):
-                print "Haven't increased the total or max bp, or tripled the number of contigs for "+ID+", exiting"
-                final[ID] = i-1
-                continue
-            last[ID]['sum'] = seqsum
-            last[ID]['max'] = maxseq
-            last[ID]['count'] = seqcount
 
 
-        ref = "iter" + str(i+1) + "_ref.fasta"
-        with open(ref, 'w') as ins:
-            for id in new:
-                if id not in final:
-                    for c in new[id]:
-                        seq = new[id][c]
-                        if i == 1 or len(seq) < args.endsize*2:
-                            ins.write(">" + id + "_contig" + str(c) + "\n")
-                            ins.write(seq + "\n")
-                        elif i >= 10 and len(seq) <= args.remove:
-                            pass
-                        else:
-                            ins.write(">" + id + "_contig" + str(c) + "_start\n")
-                            ins.write(seq[:args.endsize] + "\n")
-                            ins.write(">" + id + "_contig" + str(c) + "_end\n")
-                            ins.write(seq[-args.endsize:] + "\n")
-        ins.close()
+            ref = "iter" + str(i+1) + "_ref.fasta"
+            with open(ref, 'w') as ins:
+                for id in new:
+                    if id not in final:
+                        for c in new[id]:
+                            seq = new[id][c]
+                            if i == 1 or len(seq) < args.endsize*2:
+                                ins.write(">" + id + "_contig" + str(c) + "\n")
+                                ins.write(seq + "\n")
+                            elif i >= 10 and len(seq) <= args.remove:
+                                pass
+                            else:
+                                ins.write(">" + id + "_contig" + str(c) + "_start\n")
+                                ins.write(seq[:args.endsize] + "\n")
+                                ins.write(">" + id + "_contig" + str(c) + "_end\n")
+                                ins.write(seq[-args.endsize:] + "\n")
+            ins.close()
 
     for ID in ids:
         if ID not in final:
             final[ID] = args.m
         if final[ID] > 0:
-            final_process(args, final[ID], ID)
+            #final_process(args, final[ID], ID)
 
     # finalres = [pool.apply_async(final_process), args=(args, final[ID], ID)) for ID in ids]
     # finaloutput = [p.get() for p in finalres]
