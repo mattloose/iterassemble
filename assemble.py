@@ -538,9 +538,10 @@ if __name__ == "__main__":
             else:
                 f = glob.glob(ID+"_files/*_cap3_pass.fasta")
                 print f
-                penultimate = sorted(f)[-2]
+                penultimate = f[-2]
                 print penultimate
                 print penultimate[len(ID)+11:-16]
+                final[ID] = int(penultimate[len(ID)+11:-16])
     else:
         for i in range(1,args.m+1):
 
