@@ -97,6 +97,8 @@ def final_process (args, i, ID):
     sc = 0
     with open(passfile, 'w') as ins:
         for record in SeqIO.parse(infile, "fasta"):
+            if i >= 10 and len(str(record.seq)) <= args.remove:
+                continue
             sc += 1
             ins.write(">Contig"+str(sc)+"\n"+str(record.seq)+"\n")
     ins.close()
