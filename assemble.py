@@ -27,7 +27,7 @@ def load_ids(file):
     return idlist
 
 
-def assemble (i, id, arr1, args):
+def assemble (i, id, arr1, args, fidx):
     dir = id + "_files"
     if not os.path.exists(dir):
         subprocess.call('mkdir '+dir, shell=True)
@@ -596,7 +596,7 @@ if __name__ == "__main__":
                     if ID not in seqhash:
                         final[ID] = 0
 
-            idres = [pool.apply_async(assemble, args=(i,ID,seqhash[ID],args)) for ID in ids if ID not in final]
+            idres = [pool.apply_async(assemble, args=(i,ID,seqhash[ID],args,fidx)) for ID in ids if ID not in final]
             idoutput = [p.get() for p in idres]
             #print idoutput
 
