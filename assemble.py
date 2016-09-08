@@ -542,6 +542,11 @@ if __name__ == "__main__":
                 penultimate = f[-2]
                 final[ID] = int(penultimate[len(ID)+11:-16])
     else:
+
+        logfile = "iterassemble.log"
+        logout = open(logfile, 'w')
+        logout.write("Iter\tID\tContig no.\tMax contig length\tTotal length\tStatus\n")
+
         for i in range(1,args.m+1):
 
             seqhash = dict()
@@ -592,6 +597,7 @@ if __name__ == "__main__":
                         new[ID] = dict()
                     new[ID][seqcount] = str(record.seq)
                 print ID + "\t" + str(seqcount) + "\t" + str(maxseq) + "\t" + str(seqsum)
+                logout.write(str(i)+"\t"+ID + "\t" + str(seqcount) + "\t" + str(maxseq) + "\t" + str(seqsum))
                 if ID not in last:
                     if seqsum == 0:
                         print "No bases for "+ID+", exiting"
@@ -603,8 +609,10 @@ if __name__ == "__main__":
                     last[ID]['count'] = seqcount
                 elif (last[ID]['sum'] >= seqsum and last[ID]['max'] >= maxseq) or (seqcount >= last[ID]['count']*3 and i > 2):
                     print "Haven't increased the total or max bp, or tripled the number of contigs for "+ID+", exiting"
+                    logout.write("\tENDED\n")
                     final[ID] = i-1
                     continue
+                logout.write("\n")
                 last[ID]['sum'] = seqsum
                 last[ID]['max'] = maxseq
                 last[ID]['count'] = seqcount
@@ -627,6 +635,8 @@ if __name__ == "__main__":
                                 ins.write(">" + id + "_contig" + str(c) + "_end\n")
                                 ins.write(seq[-args.endsize:] + "\n")
             ins.close()
+
+        logout.close()
 
     for ID in ids:
         if ID not in final:
