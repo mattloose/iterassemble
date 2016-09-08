@@ -48,13 +48,13 @@ def assemble (i, id, arr1, args, fidx):
         for p in fidx:
             if fid > p:
                 print fid + " is bigger than " + p
-                if fidx[p] not in filelist:
+                if args.d+"/"+fidx[p] not in filelist:
                     filelist.append(args.d+"/"+fidx[p])
                 break
     print filelist
 
-    subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
-    subprocess.call("ls "+args.d+"/seq*_R2.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f2, shell=True)
+    subprocess.call("ls "+"_R1.fastq ".join(filelist)+"_R1.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
+    subprocess.call("ls "+"_R2.fastq ".join(filelist)+"_R2.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f2, shell=True)
 
     conf = dir + "/conf.txt"
     with open(conf, 'w') as ins:
