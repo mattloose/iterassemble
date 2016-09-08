@@ -45,11 +45,11 @@ def assemble (i, id, arr1, args, fidx):
 
     filelist = []
     for fid in arr1:
-        for p in fidx:
-            if fid > p:
+        for a in range(len(fidx[0])):
+            if fid >= fidx[0][a] and (fid < fidx[0][a+1] or a == len(fidx[0])):
                 print fid + " is bigger than " + p
-                if args.d+"/"+fidx[p] not in filelist:
-                    filelist.append(args.d+"/"+fidx[p])
+                if args.d+"/"+fidx[1][a] not in filelist:
+                    filelist.append(args.d+"/"+fidx[1][a])
                 break
     print filelist
 
@@ -537,12 +537,14 @@ if __name__ == "__main__":
     else:
         split_index(args)
 
-    fidx = dict()
+    fidx1 = []
+    fidx2 = []
     with open(args.d+"/fq_to_file.txt", 'r') as ins:
         for l in ins:
             s = l.rstrip().split("\t")
-            fidx[s[0]] = s[1]
-
+            fidx1.append(s[0])
+            fidx2.append(s[1])
+    fidx = [fidx1,fidx2]
     last = dict()
     final = dict()
 
