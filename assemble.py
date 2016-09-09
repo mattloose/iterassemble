@@ -46,16 +46,10 @@ def assemble (i, id, arr1, args, fidx):
 
     filelist = []
     for fid in arr1:
-        x = bisect.bisect_left(fidx[0],fid)
+        x = bisect.bisect(fidx[0],fid) - 1
         print fid + " is bigger than " + fidx[0][x]
-        if args.d+"/"+fidx[1][x] not in filelist:
-            filelist.append(args.d+"/"+fidx[1][x])
-        # for a in range(len(fidx[0])):
-        #     if fid >= fidx[0][a] and (fid < fidx[0][a+1] or a == len(fidx[0])):
-        #         print fid + " is bigger than " + p
-        #         if args.d+"/"+fidx[1][a] not in filelist:
-        #             filelist.append(args.d+"/"+fidx[1][a])
-        #         break
+        if fidx[1][x] not in filelist:
+            filelist.append(fidx[1][x])
     print filelist
 
     subprocess.call("ls "+"_R1.fastq ".join(filelist)+"_R1.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
@@ -501,7 +495,7 @@ def split_index (args):
         subprocess.call("cat "+args.read2+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l 4000000 -a 3 --additional-suffix=_R2.fastq - "+args.d+"/seq", shell=True)
 
     subprocess.call('ls '+args.d+'/seq*.fastq | parallel -j '+str(args.t)+' bwa index {}', shell=True)
-    subprocess.call("ls seq*_R1.fastq | parallel -k --tag head -n 1 {} | awk '{print $2 \"\t\" $1}' | sed 's/^@//' | sed 's/_R1.fastq$//' > fq_to_file.txt", shell=True)
+    subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -k --tag head -n 1 {} | awk '{print $2 \"\t\" $1}' | sed 's/^@//' | sed 's/_R1.fastq$//' > "+args.d+"/fq_to_file.txt", shell=True)
     with open(args.d+"/info.txt", 'w') as ins:
         ins.write(args.read1 + "\t" + args.read2)
     ins.close()
