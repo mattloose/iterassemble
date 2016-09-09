@@ -11,6 +11,7 @@ from Bio.Align.Applications import MuscleCommandline
 from StringIO import StringIO
 from Bio import AlignIO
 from Bio.Align import AlignInfo
+import bisect
 
 
 def load_ids(file):
@@ -45,7 +46,7 @@ def assemble (i, id, arr1, args, fidx):
 
     filelist = []
     for fid in arr1:
-        x = bisect_left(fidx[0],fid)
+        x = bisect.bisect_left(fidx[0],fid)
         print fid + " is bigger than " + fidx[0][x]
         if args.d+"/"+fidx[1][x] not in filelist:
             filelist.append(args.d+"/"+fidx[1][x])
