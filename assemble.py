@@ -45,12 +45,16 @@ def assemble (i, id, arr1, args, fidx):
 
     filelist = []
     for fid in arr1:
-        for a in range(len(fidx[0])):
-            if fid >= fidx[0][a] and (fid < fidx[0][a+1] or a == len(fidx[0])):
-                print fid + " is bigger than " + p
-                if args.d+"/"+fidx[1][a] not in filelist:
-                    filelist.append(args.d+"/"+fidx[1][a])
-                break
+        x = bisect_left(fidx[0],fid)
+        print fid + " is bigger than " + fidx[0][x]
+        if args.d+"/"+fidx[1][x] not in filelist:
+            filelist.append(args.d+"/"+fidx[1][x])
+        # for a in range(len(fidx[0])):
+        #     if fid >= fidx[0][a] and (fid < fidx[0][a+1] or a == len(fidx[0])):
+        #         print fid + " is bigger than " + p
+        #         if args.d+"/"+fidx[1][a] not in filelist:
+        #             filelist.append(args.d+"/"+fidx[1][a])
+        #         break
     print filelist
 
     subprocess.call("ls "+"_R1.fastq ".join(filelist)+"_R1.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
