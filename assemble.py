@@ -81,6 +81,15 @@ def assemble (i, id, arr1, args):
     cap3 = dir + "/iter" + str(i) + "_cap3.fasta"
     subprocess.call('cat ' + soapout + '.scafSeq.cap.contigs ' + soapout + '.scafSeq.cap.singlets > ' + cap3, shell=True)
 
+    subprocess.call('makeblastdb -in '+cap3+' -dbtype nucl', shell=True)
+    p1 = subprocess.Popen('blastn -db '+cap3+' -query '+cap3+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    for l in iter(p1.stdout.readline,''):
+        l = l.rstrip()
+        print l
+        data = l.split("\t")
+        if data[0] != data[1]:
+            print "Possible join?"
+
     passfile = dir + "/iter" + str(i) + "_cap3_pass.fasta"
     subprocess.call('bwa mem ' + args.cDNA + ' ' + cap3 + ' | grep "'+id+'"| bam2fastx -s -M -Q -a -o ' + passfile + ' - ', shell=True)
 
