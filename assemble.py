@@ -48,7 +48,7 @@ def assemble (i, id, arr1, args):
 
     conf = dir + "/conf.txt"
     with open(conf, 'w') as ins:
-        ins.write("max_rd_len=150\n[LIB]\navg_ins="+str(args.insert)+"\nreverse_seq=0\nasm_flags=3\nrd_len_cutoff=100\nrank=1\npair_num_cutoff=3\n")
+        ins.write("max_rd_len=150\n[LIB]\navg_ins="+str(args.insert)+"\nreverse_seq=0\nasm_flags=1\nrd_len_cutoff=100\nrank=1\npair_num_cutoff=3\n")
         ins.write("q1="+f1+"\n")
         ins.write("q2="+f2+"\n")
     ins.close()
@@ -59,7 +59,7 @@ def assemble (i, id, arr1, args):
         subprocess.call("rm "+soapout1+"* "+soapout2+"* ", shell=True)
     soapout = dir + "/iter" + str(i) + "_soap";
 
-    subprocess.call('SOAPdenovo-63mer all -s '+conf+' -K 63 -R -F -p 2 -o '+soapout1, shell=True)
+    subprocess.call('SOAPdenovo-63mer all -s '+conf+' -K 63 -p 2 -o '+soapout1, shell=True)
 
     subprocess.call('SOAPdenovo-63mer all -s '+conf+' -R -F -p 2 -o '+soapout2, shell=True)
 
