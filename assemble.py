@@ -79,19 +79,22 @@ def assemble (i, id, arr1, args):
     subprocess.call('cap3 ' + soapout + '.scafSeq -k 0 -p 75 -o 30 -h 80 -f 200 -g 4', shell=True)
 
     cap3 = dir + "/iter" + str(i) + "_cap3.fasta"
-    subprocess.call('cat ' + soapout + '.scafSeq.cap.contigs ' + soapout + '.scafSeq.cap.singlets > ' + cap3, shell=True)
+    subprocess.call('cat ' + soapout + '.scafSeq.cap.contigs ' + soapout + ".scafSeq.cap.singlets | awk 'BEGIN{C=0} {if (/^>/){C+=1; print \">Contig_\" C;}else{print;}}' > " + cap3, shell=True)
 
-    subprocess.call('makeblastdb -in '+cap3+' -dbtype nucl', shell=True)
-    p1 = subprocess.Popen('blastn -db '+cap3+' -query '+cap3+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    passfile = dir + "/iter" + str(i) + "_cap3_pass.fasta"
+
+    subprocess.call('makeblastdb -in '+cap3+' -dbtype nucl -parse_seqids', shell=True)
+    p1 = subprocess.Popen('blastn -db '+cap3+' -query '+args.cDNA+' -outfmt 6 -culling_limit 2',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
         print l
         data = l.split("\t")
-        if data[0] != data[1]:
-            print "Possible join?"
+        if data[0] == id:
+            subprocess.call('blastdbcmd -db '+cap3+' -entry '+data[1]+' >> '+passfile, shell=True)
 
-    passfile = dir + "/iter" + str(i) + "_cap3_pass.fasta"
-    subprocess.call('bwa mem ' + args.cDNA + ' ' + cap3 + ' | grep "'+id+'"| bam2fastx -s -M -Q -a -o ' + passfile + ' - ', shell=True)
+
+    # passfile = dir + "/iter" + str(i) + "_cap3_pass.fasta"
+    # subprocess.call('bwa mem ' + args.cDNA + ' ' + cap3 + ' | grep "'+id+'"| bam2fastx -s -M -Q -a -o ' + passfile + ' - ', shell=True)
 
     #count = subprocess.check_output('ls -l ' + passfile + " | awk '{print $5}' ", shell=True)
 
