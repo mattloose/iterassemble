@@ -82,6 +82,8 @@ def assemble (i, id, arr1, args):
     subprocess.call('cat ' + soapout + '.scafSeq.cap.contigs ' + soapout + ".scafSeq.cap.singlets | awk 'BEGIN{C=0} {if (/^>/){C+=1; print \">Contig_\" C;}else{print;}}' > " + cap3, shell=True)
 
     passfile = dir + "/iter" + str(i) + "_cap3_pass.fasta"
+    if os.path.exists(passfile):
+        subprocess.call("rm "+passfile,shell=True)
 
     subprocess.call('makeblastdb -in '+cap3+' -dbtype nucl -parse_seqids', shell=True)
     p1 = subprocess.Popen('blastn -db '+cap3+' -query '+args.cDNA+' -outfmt 6 -culling_limit 2',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
@@ -90,7 +92,7 @@ def assemble (i, id, arr1, args):
         print l
         data = l.split("\t")
         if data[0] == id:
-            subprocess.call('blastdbcmd -db '+cap3+' -entry '+data[1]+' >> '+passfile, shell=True)
+            subprocess.call('blastdbcmd -db '+cap3+' -entry '+data[1]+' -outfmt "%s" | awk \'BEGIN{print ">'+data[1]+'"}{print}\' >> '+passfile, shell=True)
 
 
     # passfile = dir + "/iter" + str(i) + "_cap3_pass.fasta"
