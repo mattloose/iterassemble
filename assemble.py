@@ -91,12 +91,18 @@ def assemble (i, id, arr1, args):
     p1 = subprocess.Popen('blastn -db '+cap3+' -query '+args.cDNA+' -outfmt 6 -culling_limit 2',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
-        print l
         data = l.split("\t")
         if data[0] == id and data[1] not in keepseq:
             keepseq.append(data[1])
             subprocess.call('blastdbcmd -db '+cap3+' -entry '+data[1]+' -outfmt "%s" | awk \'BEGIN{print ">'+data[1]+'"}{print}\' >> '+passfile, shell=True)
 
+    p1 = subprocess.Popen('blastn -db '+cap3+' -query '+passfile+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    for l in iter(p1.stdout.readline,''):
+        l = l.rstrip()
+        print l
+        data = l.split("\t")
+        if data[0] != data[1]:
+            print "Possible?"
 
     # passfile = dir + "/iter" + str(i) + "_cap3_pass.fasta"
     # subprocess.call('bwa mem ' + args.cDNA + ' ' + cap3 + ' | grep "'+id+'"| bam2fastx -s -M -Q -a -o ' + passfile + ' - ', shell=True)
