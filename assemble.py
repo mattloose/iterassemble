@@ -11,6 +11,7 @@ from Bio.Align.Applications import MuscleCommandline
 from StringIO import StringIO
 from Bio import AlignIO
 from Bio.Align import AlignInfo
+import bisect
 
 
 def load_ids(file):
@@ -27,7 +28,7 @@ def load_ids(file):
     return idlist
 
 
-def assemble (i, id, arr1, args):
+def assemble (i, id, arr1, args, fidx):
     dir = id + "_files"
     if not os.path.exists(dir):
         subprocess.call('mkdir '+dir, shell=True)
@@ -43,8 +44,16 @@ def assemble (i, id, arr1, args):
     if i > 1:
         subprocess.call("bwa index "+dir+"/iter"+str(i-1)+"_cap3_pass.fasta; bwa mem "+dir+"/iter"+str(i-1)+"_cap3_pass.fasta "+dir+"/iter"+str(i-1)+"_R1.fastq "+dir+"/iter"+str(i-1)+"_R2.fastq | samtools view -F 4 -f 8 - | awk '{print $1}' >> "+fids, shell=True)
 
-    subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
-    subprocess.call("ls "+args.d+"/seq*_R2.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f2, shell=True)
+    filelist = []
+    for fid in arr1:
+        x = bisect.bisect(fidx[0],fid) - 1
+        print fid + " is bigger than " + fidx[0][x]
+        if fidx[1][x] not in filelist:
+            filelist.append(fidx[1][x])
+    print filelist
+
+    subprocess.call("ls "+"_R1.fastq ".join(filelist)+"_R1.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
+    subprocess.call("ls "+"_R2.fastq ".join(filelist)+"_R2.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f2, shell=True)
 
     conf = dir + "/conf.txt"
     with open(conf, 'w') as ins:
@@ -519,7 +528,7 @@ def split_index (args):
         subprocess.call("cat "+args.read2+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l 4000000 -a 3 --additional-suffix=_R2.fastq - "+args.d+"/seq", shell=True)
 
     subprocess.call('ls '+args.d+'/seq*.fastq | parallel -j '+str(args.t)+' bwa index {}', shell=True)
-
+    subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -k --tag head -n 1 {} | awk '{print $2 \"\t\" $1}' | sed 's/^@//' | sed 's/_R1.fastq$//' > "+args.d+"/fq_to_file.txt", shell=True)
     with open(args.d+"/info.txt", 'w') as ins:
         ins.write(args.read1 + "\t" + args.read2)
     ins.close()
@@ -560,6 +569,14 @@ if __name__ == "__main__":
     else:
         split_index(args)
 
+    fidx1 = []
+    fidx2 = []
+    with open(args.d+"/fq_to_file.txt", 'r') as ins:
+        for l in ins:
+            s = l.rstrip().split("\t")
+            fidx1.append(s[0])
+            fidx2.append(s[1])
+    fidx = [fidx1,fidx2]
     last = dict()
     final = dict()
 
@@ -613,7 +630,7 @@ if __name__ == "__main__":
                     if ID not in seqhash:
                         final[ID] = 0
 
-            idres = [pool.apply_async(assemble, args=(i,ID,seqhash[ID],args)) for ID in ids if ID not in final]
+            idres = [pool.apply_async(assemble, args=(i,ID,seqhash[ID],args,fidx)) for ID in ids if ID not in final]
             idoutput = [p.get() for p in idres]
             #print idoutput
 
