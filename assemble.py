@@ -134,11 +134,23 @@ def final_process (args, i, ID):
     print dir
 
     infile = dir +"/iter" + str(i) + "_cap3_pass.fasta"
-    passfile = dir +"/iter" + str(i) + "_cap3_pass.fasta.renamed"
+    scaffile = dir +"/iter" + str(i) + "_cap3_pass.scaffolds.fasta"
+    allr1 = dir + "/allR1.fastq"
+    allr2 = dir + "/allR2.fastq"
+    subprocess.call("cat "+dir+"/*_R1.fastq > "+allr1, shell=True)
+    subprocess.call("cat "+dir+"/*_R2.fastq > "+allr2, shell=True)
+    bam = dir + "/iter"+str(i)+"_cap3_pass.bam"
+    subprocess.call("bwa index "+infile+"; bwa mem "+infile+" "+allr1+" "+allr2+" | samtools view -b - > "+bam, shell=True)
+    subprocess.call("sga-bam2de.pl -n 2 --prefix "+dir+"/sgascaf "+bam, shell=True)
+    subprocess.call("sga-astat.py "+bam+" > "+dir+"/sgascaf.astat", shell=True)
+    subprocess.call("sga scaffold -m 200 --pe "+dir+"/sgascaf.de -a "+dir+"/sgascaf.astat -o "+dir+"/sgascaf.scaf "+infile, shell=True)
+    subprocess.call("sga scaffold2fasta -o "+scaffile+" -f "+infile+" "+dir+"/sgascaf.scaf")
+
+    passfile = dir +"/iter" + str(i) + "_cap3_pass.scaffolds.fasta.renamed"
 
     sc = 0
     with open(passfile, 'w') as ins:
-        for record in SeqIO.parse(infile, "fasta"):
+        for record in SeqIO.parse(scaffile, "fasta"):
             if i >= 10 and len(str(record.seq)) <= args.remove:
                 continue
             sc += 1
