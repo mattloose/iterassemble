@@ -144,7 +144,7 @@ def final_process (args, i, ID):
     subprocess.call("sga-bam2de.pl -n 2 --prefix "+dir+"/sgascaf "+bam, shell=True)
     subprocess.call("sga-astat.py "+bam+" > "+dir+"/sgascaf.astat", shell=True)
     subprocess.call("sga scaffold -m 200 --pe "+dir+"/sgascaf.de -a "+dir+"/sgascaf.astat -o "+dir+"/sgascaf.scaf "+infile, shell=True)
-    subprocess.call("sga scaffold2fasta -o "+scaffile+" -f "+infile+" "+dir+"/sgascaf.scaf")
+    subprocess.call("sga scaffold2fasta -o "+scaffile+" -f "+infile+" "+dir+"/sgascaf.scaf", shell=True)
 
     passfile = dir +"/iter" + str(i) + "_cap3_pass.scaffolds.fasta.renamed"
 
