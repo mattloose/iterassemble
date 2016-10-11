@@ -139,8 +139,9 @@ def final_process (args, i, ID):
     allr2 = dir + "/allR2.fastq"
     subprocess.call("cat "+dir+"/*_R1.fastq > "+allr1, shell=True)
     subprocess.call("cat "+dir+"/*_R2.fastq > "+allr2, shell=True)
+    subprocess.call("rmDup2.py "+allr1+" "+allr2, shell=True)
     bam = dir + "/iter"+str(i)+"_cap3_pass.bam"
-    subprocess.call("bwa index "+infile+"; bwa mem "+infile+" "+allr1+" "+allr2+" | samtools view -b - > "+bam, shell=True)
+    subprocess.call("bwa index "+infile+"; bwa mem "+infile+" "+allr1+"_rmDup "+allr2+"_rmDup | samtools view -b - > "+bam, shell=True)
     subprocess.call("sga-bam2de.pl -n 2 --prefix "+dir+"/sgascaf "+bam, shell=True)
     subprocess.call("sga-astat.py "+bam+" > "+dir+"/sgascaf.astat", shell=True)
     subprocess.call("sga scaffold -m 200 --pe "+dir+"/sgascaf.de -a "+dir+"/sgascaf.astat -o "+dir+"/sgascaf.scaf "+infile, shell=True)
