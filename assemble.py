@@ -112,11 +112,11 @@ def assemble (i, id, arr1, args, fidx):
         l = l.rstrip()
         print l
         data = l.split("\t")
-        if data[0] in keepseq and data[2] >= 2:
+        if data[0] in keepseq and data[2] >= 5:
             if data[1] not in addseq and data[1] not in keepseq:
                 addseq.append(data[1])
                 subprocess.call('blastdbcmd -db '+cap3+' -entry '+data[1]+' -outfmt "%s" | awk \'BEGIN{print ">'+data[1]+'"}{print}\' >> '+passfile, shell=True)
-        if data[1] in keepseq and data[2] >= 2:
+        if data[1] in keepseq and data[2] >= 5:
             if data[0] not in addseq and data[0] not in keepseq:
                 addseq.append(data[0])
                 subprocess.call('blastdbcmd -db '+cap3+' -entry '+data[0]+' -outfmt "%s" | awk \'BEGIN{print ">'+data[0]+'"}{print}\' >> '+passfile, shell=True)
@@ -142,7 +142,7 @@ def final_process (args, i, ID):
     subprocess.call("rmDup2.py "+allr1+" "+allr2, shell=True)
     bam = dir + "/iter"+str(i)+"_cap3_pass.bam"
     subprocess.call("bwa index "+infile+"; bwa mem "+infile+" "+allr1+"_rmDup "+allr2+"_rmDup | samtools view -b -F 2048 - > "+bam, shell=True)
-    subprocess.call("sga-bam2de.pl -n 2 --prefix "+dir+"/sgascaf "+bam, shell=True)
+    subprocess.call("sga-bam2de.pl -n 5 --prefix "+dir+"/sgascaf "+bam, shell=True)
     subprocess.call("sga-astat.py "+bam+" > "+dir+"/sgascaf.astat", shell=True)
     subprocess.call("sga scaffold -m 200 --pe "+dir+"/sgascaf.de -a "+dir+"/sgascaf.astat -o "+dir+"/sgascaf.scaf "+infile, shell=True)
     subprocess.call("sga scaffold2fasta -o "+scaffile+" -f "+infile+" "+dir+"/sgascaf.scaf", shell=True)
