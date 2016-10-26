@@ -628,7 +628,7 @@ if __name__ == "__main__":
                         id = data[a]
                         if (id == '*'):
                             continue
-                        id = re.sub(":.*$","",id)
+                        id = re.sub(":[-+]\d+$","",id)
                         id = re.sub("/\d$","",id)
                         if refseq not in seqhash:
                             seqhash[refseq] = []
