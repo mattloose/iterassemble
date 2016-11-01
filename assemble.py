@@ -143,8 +143,9 @@ def final_process (args, i, ID):
     bam = dir + "/iter"+str(i)+"_cap3_pass.bam"
     subprocess.call("bwa index "+infile+"; bwa mem "+infile+" "+allr1+"_rmDup "+allr2+"_rmDup | samtools view -b -F 2048 - > "+bam, shell=True)
     subprocess.call("sga-bam2de.pl -n 5 --prefix "+dir+"/sgascaf "+bam, shell=True)
-    subprocess.call("sga-astat.py "+bam+" > "+dir+"/sgascaf.astat", shell=True)
-    subprocess.call("sga scaffold -m 200 --pe "+dir+"/sgascaf.de -a "+dir+"/sgascaf.astat -o "+dir+"/sgascaf.scaf "+infile, shell=True)
+    #subprocess.call("sga-astat.py "+bam+" > "+dir+"/sgascaf.astat", shell=True)
+    #subprocess.call("sga scaffold -m 200 --pe "+dir+"/sgascaf.de -a "+dir+"/sgascaf.astat -o "+dir+"/sgascaf.scaf "+infile, shell=True)
+    subprocess.call("sga scaffold -m 200 --pe "+dir+"/sgascaf.de -o "+dir+"/sgascaf.scaf "+infile, shell=True)
     subprocess.call("sga scaffold2fasta -o "+scaffile+" -f "+infile+" "+dir+"/sgascaf.scaf", shell=True)
 
     passfile = dir +"/iter" + str(i) + "_cap3_pass.scaffolds.fasta.renamed"
