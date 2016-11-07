@@ -97,7 +97,7 @@ def assemble (i, id, arr1, args, fidx):
     keepseq = []
 
     subprocess.call('makeblastdb -in '+cap3+' -dbtype nucl -parse_seqids', shell=True)
-    p1 = subprocess.Popen('blastn -db '+cap3+' -query '+args.cDNA+' -outfmt 6 -culling_limit 2',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    p1 = subprocess.Popen('blastn -db '+cap3+' -query '+args.cDNA+' -outfmt 6 -culling_limit '+args.culling,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
         data = l.split("\t")
@@ -112,11 +112,11 @@ def assemble (i, id, arr1, args, fidx):
         l = l.rstrip()
         print l
         data = l.split("\t")
-        if data[0] in keepseq and data[2] >= 5:
+        if data[0] in keepseq and data[2] >= args.nreads:
             if data[1] not in addseq and data[1] not in keepseq:
                 addseq.append(data[1])
                 subprocess.call('blastdbcmd -db '+cap3+' -entry '+data[1]+' -outfmt "%s" | awk \'BEGIN{print ">'+data[1]+'"}{print}\' >> '+passfile, shell=True)
-        if data[1] in keepseq and data[2] >= 5:
+        if data[1] in keepseq and data[2] >= args.nreads:
             if data[0] not in addseq and data[0] not in keepseq:
                 addseq.append(data[0])
                 subprocess.call('blastdbcmd -db '+cap3+' -entry '+data[0]+' -outfmt "%s" | awk \'BEGIN{print ">'+data[0]+'"}{print}\' >> '+passfile, shell=True)
@@ -562,6 +562,8 @@ if __name__ == "__main__":
     parser.add_argument('-e','--endsize', nargs='?', metavar='INT', default=600, type=int, help='Number of bases from each end of the contigs to map (default: %(default)s)')
     parser.add_argument('-r','--remove', nargs='?', metavar='INT', default=200, type=int, help='After 10 iterations, remove contigs shorter than INT (default: %(default)s)')
     parser.add_argument('-f','--fastmap', nargs='?', metavar='INT', default=60, type=int, help='Minimum SMEM length permited in bwa fastmap (default: %(default)s)')
+    parser.add_argument('-c','--culling', nargs='?', metavar='INT', default=2, type=int, help="After each iteration blast step uses this culling_limit (default: %(default)s)")
+    parser.add_argument('-n','--nreads', nargs='?', metavar='INT',default=5,type=int, help = "Contigs with n reads mapped across are kept after each iteration (default: %(default)s)")
     parser.add_argument('--end_process_only', action='store_true', help='No iterative assembly will be performed, just the end process based on existing files (default: %(default)s)')
 
     args = parser.parse_args()
