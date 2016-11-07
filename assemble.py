@@ -97,7 +97,7 @@ def assemble (i, id, arr1, args, fidx):
     keepseq = []
 
     subprocess.call('makeblastdb -in '+cap3+' -dbtype nucl -parse_seqids', shell=True)
-    p1 = subprocess.Popen('blastn -db '+cap3+' -query '+args.cDNA+' -outfmt 6 -culling_limit '+args.culling,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    p1 = subprocess.Popen('blastn -db '+cap3+' -query '+args.cDNA+' -outfmt 6 -culling_limit '+str(args.culling),shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
         data = l.split("\t")
