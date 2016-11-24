@@ -703,6 +703,10 @@ if __name__ == "__main__":
                                 ins.write(seq[-args.endsize:] + "\n")
             ins.close()
 
+            if os.path.getsize(ref) == 0:
+                break
+
+
         logout.close()
 
     for ID in ids:
