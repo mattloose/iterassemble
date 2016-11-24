@@ -564,6 +564,7 @@ if __name__ == "__main__":
     parser.add_argument('-f','--fastmap', nargs='?', metavar='INT', default=60, type=int, help='Minimum SMEM length permited in bwa fastmap (default: %(default)s)')
     parser.add_argument('-c','--culling', nargs='?', metavar='INT', default=2, type=int, help="After each iteration blast step uses this culling_limit (default: %(default)s)")
     parser.add_argument('-n','--nreads', nargs='?', metavar='INT',default=5,type=int, help = "Contigs with n reads mapped across are kept after each iteration (default: %(default)s)")
+    parser.add_argument('-M','--maxcontigs', nargs='?', metavar= 'INT', default=500, type=int, help="Maximum number of contigs per gene after each iteration (default: %(default)s)")
     parser.add_argument('--end_process_only', action='store_true', help='No iterative assembly will be performed, just the end process based on existing files (default: %(default)s)')
 
     args = parser.parse_args()
@@ -673,8 +674,8 @@ if __name__ == "__main__":
                     last[ID]['sum'] = seqsum
                     last[ID]['max'] = maxseq
                     last[ID]['count'] = seqcount
-                elif (last[ID]['sum'] >= seqsum and last[ID]['max'] >= maxseq) or (seqcount >= last[ID]['count']*3 and i > 2):
-                    print "Haven't increased the total or max bp, or tripled the number of contigs for "+ID+", exiting"
+                elif (last[ID]['sum'] >= seqsum and last[ID]['max'] >= maxseq) or (seqcount >= last[ID]['count']*3 and i > 2) or (seqcount >= args.maxcontigs):
+                    print "Haven't increased the total or max bp, or tripled the number of contigs for "+ID+", or found too many contigs, exiting"
                     logout.write("\tENDED\n")
                     final[ID] = i-1
                     continue
