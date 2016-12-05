@@ -107,7 +107,7 @@ def assemble (i, id, arr1, args, fidx):
 
     addseq = []
 
-    p1 = subprocess.Popen('bwa index '+cap3+' ; bwa mem '+cap3+' '+f1+' '+f2+' | samtools view -F 2316 - | awk \'{if ($7 != "="){ print;}}\' | awk \'{a[$3][$7]++} END {for (b in a){ for (c in a[b]){ print b "\t" c "\t" a[b][c];}}}\' ',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    p1 = subprocess.Popen('bwa index '+cap3+' ; bwa mem '+cap3+' '+f1+' '+f2+' | samtools view -F 2316 - | awk \'{if ($7 != "="){ print;}}\' | gawk \'{a[$3][$7]++} END {for (b in a){ for (c in a[b]){ print b "\t" c "\t" a[b][c];}}}\' ',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
         print l
