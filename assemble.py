@@ -535,14 +535,14 @@ def split_index (args):
         subprocess.call('rm -rf '+args.d, shell=True)
     subprocess.call("mkdir "+args.d, shell=True)
     if re.search("\.gz$", args.read1):
-        subprocess.call("gzip -dc "+args.read1+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l 4000000 -a 3 - "+args.d+"/seq", shell=True)
+        subprocess.call("gzip -dc "+args.read1+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l "+str(args.split)+" -a 3 - "+args.d+"/seq", shell=True)
         subprocess.call("ls "+args.d+"/seq??? | awk '{system(\"mv \" $0 \" \" $0 \"_R1.fastq\")}'", shell=True)
-        subprocess.call("gzip -dc "+args.read2+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l 4000000 -a 3 - "+args.d+"/seq", shell=True)
+        subprocess.call("gzip -dc "+args.read2+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l "+str(args.split)+" -a 3 - "+args.d+"/seq", shell=True)
         subprocess.call("ls "+args.d+"/seq??? | awk '{system(\"mv \" $0 \" \" $0 \"_R2.fastq\")}'", shell=True)
     else:
-        subprocess.call("cat "+args.read1+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l 4000000 -a 3 - "+args.d+"/seq", shell=True)
+        subprocess.call("cat "+args.read1+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l "+str(args.split)+" -a 3 - "+args.d+"/seq", shell=True)
         subprocess.call("ls "+args.d+"/seq??? | awk '{system(\"mv \" $0 \" \" $0 \"_R1.fastq\")}'", shell=True)
-        subprocess.call("cat "+args.read2+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l 4000000 -a 3 - "+args.d+"/seq", shell=True)
+        subprocess.call("cat "+args.read2+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l "+str(args.split)+" -a 3 - "+args.d+"/seq", shell=True)
         subprocess.call("ls "+args.d+"/seq??? | awk '{system(\"mv \" $0 \" \" $0 \"_R2.fastq\")}'", shell=True)
 
     subprocess.call('ls '+args.d+'/seq*.fastq | parallel -j '+str(args.t)+' bwa index {}', shell=True)
