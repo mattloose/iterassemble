@@ -28,7 +28,7 @@ def load_ids(file):
     return idlist
 
 
-def assemble (i, id, arr1, args, fidx):
+def assemble (i, id, arr1, args, fidx, upf1, upf2):
     dir = id + "_files"
     if not os.path.exists(dir):
         subprocess.call('mkdir '+dir, shell=True)
@@ -41,19 +41,19 @@ def assemble (i, id, arr1, args, fidx):
         ins.write("\n".join(arr1))
     ins.close()
 
-    if i > 1:
-        subprocess.call("bwa index "+dir+"/iter"+str(i-1)+"_cap3_pass.fasta; bwa mem "+dir+"/iter"+str(i-1)+"_cap3_pass.fasta "+dir+"/iter"+str(i-1)+"_R1.fastq "+dir+"/iter"+str(i-1)+"_R2.fastq | samtools view -F 4 -f 8 - | awk '{print $1}' >> "+fids, shell=True)
+    # if i > 1:
+    #     subprocess.call("bwa index "+dir+"/iter"+str(i-1)+"_cap3_pass.fasta; bwa mem "+dir+"/iter"+str(i-1)+"_cap3_pass.fasta "+dir+"/iter"+str(i-1)+"_R1.fastq "+dir+"/iter"+str(i-1)+"_R2.fastq | samtools view -F 4 -f 8 - | awk '{print $1}' >> "+fids, shell=True)
+    #
+    # filelist = []
+    # for fid in arr1:
+    #     x = bisect.bisect(fidx[0],fid) - 1
+    #     print fid + " is bigger than " + fidx[0][x]
+    #     if fidx[1][x] not in filelist:
+    #         filelist.append(fidx[1][x])
+    # print filelist
 
-    filelist = []
-    for fid in arr1:
-        x = bisect.bisect(fidx[0],fid) - 1
-        print fid + " is bigger than " + fidx[0][x]
-        if fidx[1][x] not in filelist:
-            filelist.append(fidx[1][x])
-    print filelist
-
-    subprocess.call("ls "+"_R1.fastq ".join(filelist)+"_R1.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f1, shell=True)
-    subprocess.call("ls "+"_R2.fastq ".join(filelist)+"_R2.fastq | parallel -j 2 -k 'cat {} | fqextract "+fids+"' > "+f2, shell=True)
+    subprocess.call("cat "+upf1+" | fqextract "+fids+"' > "+f1, shell=True)
+    subprocess.call("cat "+upf2+" | fqextract "+fids+"' > "+f2, shell=True)
 
     conf = dir + "/conf.txt"
     with open(conf, 'w') as ins:
@@ -623,6 +623,8 @@ if __name__ == "__main__":
 
             seqhash = dict()
             refseq = ''
+            idsfile = "iter"+str(i)+"_ids.txt"
+            iout = open(idsfile, 'w')
 
             p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq | parallel -k -j '+str(args.t)+' bwa fastmap -l '+ ("40" if i == 1 else str(args.fastmap)) +' {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
 
@@ -639,11 +641,17 @@ if __name__ == "__main__":
                             continue
                         id = re.sub(":[-+]\d+$","",id)
                         id = re.sub("/\d$","",id)
+                        iout.write(id+"\n")
                         if refseq not in seqhash:
                             seqhash[refseq] = []
                         seqhash[refseq].append(id)
 
+            iout.close()
 
+            f1 = "iter"+str(i)+"_R1.fastq"
+            f2 = "iter"+str(i)+"_R2.fastq"
+            subprocess.call("cat "+args.d+"/*_R1.fastq | fqextract "+idsfile+" > "+f1, shell=True)
+            subprocess.call("cat "+args.d+"/*_R2.fastq | fqextract "+idsfile+" > "+f2, shell=True)
 
             new = dict()
 
@@ -652,7 +660,7 @@ if __name__ == "__main__":
                     if ID not in seqhash:
                         final[ID] = 0
 
-            idres = [pool.apply_async(assemble, args=(i,ID,seqhash[ID],args,fidx)) for ID in ids if ID not in final]
+            idres = [pool.apply_async(assemble, args=(i,ID,seqhash[ID],args,fidx,f1,f2)) for ID in ids if ID not in final]
             idoutput = [p.get() for p in idres]
             #print idoutput
 
