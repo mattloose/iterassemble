@@ -139,7 +139,7 @@ def final_process (args, i, ID):
     allr2 = dir + "/allR2.fastq"
     subprocess.call("cat "+dir+"/*_R1.fastq > "+allr1, shell=True)
     subprocess.call("cat "+dir+"/*_R2.fastq > "+allr2, shell=True)
-    subprocess.call("rmDup2.py "+allr1+" "+allr2, shell=True)
+    subprocess.call("rmPairedDuplicates.py "+allr1+" "+allr2, shell=True)
     bam = dir + "/iter"+str(i)+"_cap3_pass.bam"
     subprocess.call("bwa index "+infile+"; bwa mem "+infile+" "+allr1+"_rmDup "+allr2+"_rmDup | samtools view -b -F 2048 - > "+bam, shell=True)
     subprocess.call("sga-bam2de.pl -n 5 --prefix "+dir+"/sgascaf "+bam, shell=True)
@@ -535,11 +535,15 @@ def split_index (args):
         subprocess.call('rm -rf '+args.d, shell=True)
     subprocess.call("mkdir "+args.d, shell=True)
     if re.search("\.gz$", args.read1):
-        subprocess.call("zcat "+args.read1+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l 4000000 -a 3 --additional-suffix=_R1.fastq - "+args.d+"/seq", shell=True)
-        subprocess.call("zcat "+args.read2+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l 4000000 -a 3 --additional-suffix=_R2.fastq - "+args.d+"/seq", shell=True)
+        subprocess.call("gzip -dc "+args.read1+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l 4000000 -a 3 - "+args.d+"/seq", shell=True)
+        subprocess.call("ls "+args.d+"/seq??? | awk '{system(\"mv \" $0 \" \" $0 \"_R1.fastq\")}'", shell=True)
+        subprocess.call("gzip -dc "+args.read2+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l 4000000 -a 3 - "+args.d+"/seq", shell=True)
+        subprocess.call("ls "+args.d+"/seq??? | awk '{system(\"mv \" $0 \" \" $0 \"_R2.fastq\")}'", shell=True)
     else:
-        subprocess.call("cat "+args.read1+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l 4000000 -a 3 --additional-suffix=_R1.fastq - "+args.d+"/seq", shell=True)
-        subprocess.call("cat "+args.read2+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l 4000000 -a 3 --additional-suffix=_R2.fastq - "+args.d+"/seq", shell=True)
+        subprocess.call("cat "+args.read1+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l 4000000 -a 3 - "+args.d+"/seq", shell=True)
+        subprocess.call("ls "+args.d+"/seq??? | awk '{system(\"mv \" $0 \" \" $0 \"_R1.fastq\")}'", shell=True)
+        subprocess.call("cat "+args.read2+" | awk 'BEGIN{P=1}{if(P==1){gsub(/\s+.*$/,\"\"); gsub(/\/[1,2]$/, \"\")}; print; if(P==4)P=0; P++}' - | split -l 4000000 -a 3 - "+args.d+"/seq", shell=True)
+        subprocess.call("ls "+args.d+"/seq??? | awk '{system(\"mv \" $0 \" \" $0 \"_R2.fastq\")}'", shell=True)
 
     subprocess.call('ls '+args.d+'/seq*.fastq | parallel -j '+str(args.t)+' bwa index {}', shell=True)
     subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -k --tag head -n 1 {} | awk '{print $2 \"\t\" $1}' | sed 's/^@//' | sed 's/_R1.fastq$//' > "+args.d+"/fq_to_file.txt", shell=True)
@@ -565,6 +569,7 @@ if __name__ == "__main__":
     parser.add_argument('-c','--culling', nargs='?', metavar='INT', default=2, type=int, help="After each iteration blast step uses this culling_limit (default: %(default)s)")
     parser.add_argument('-n','--nreads', nargs='?', metavar='INT',default=5,type=int, help = "Contigs with n reads mapped across are kept after each iteration (default: %(default)s)")
     parser.add_argument('-M','--maxcontigs', nargs='?', metavar= 'INT', default=500, type=int, help="Maximum number of contigs per gene after each iteration (default: %(default)s)")
+    parser.add_argument('-s','--split', nargs = '?', metavar='INT',default=4000000, type=int, help="FASTQ files will be split on this line number, must be divisible by 4 (default: %(default)s)")
     parser.add_argument('--end_process_only', action='store_true', help='No iterative assembly will be performed, just the end process based on existing files (default: %(default)s)')
 
     args = parser.parse_args()
