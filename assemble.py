@@ -28,7 +28,7 @@ def load_ids(file):
     return idlist
 
 
-def assemble (i, id, arr1, args, fidx, upf1, upf2):
+def assemble (i, id, arr1, args, upf1, upf2):
     dir = id + "_files"
     if not os.path.exists(dir):
         subprocess.call('mkdir '+dir, shell=True)
@@ -52,8 +52,8 @@ def assemble (i, id, arr1, args, fidx, upf1, upf2):
     #         filelist.append(fidx[1][x])
     # print filelist
 
-    subprocess.call("cat "+upf1+" | fqextract "+fids+"' > "+f1, shell=True)
-    subprocess.call("cat "+upf2+" | fqextract "+fids+"' > "+f2, shell=True)
+    subprocess.call("cat "+upf1+" | fqextract "+fids+" > "+f1, shell=True)
+    subprocess.call("cat "+upf2+" | fqextract "+fids+" > "+f2, shell=True)
 
     conf = dir + "/conf.txt"
     with open(conf, 'w') as ins:
@@ -78,8 +78,8 @@ def assemble (i, id, arr1, args, fidx, upf1, upf2):
     if i > 1:
         #fa = dir + '/iter' + str(i) + '.fasta'
         #subprocess.call('cat '+f1+' '+f2+' | awk \'BEGIN{P=1}{if(P==1||P==2){gsub(/^[@]/,">");print}; if(P==4)P=0; P++}\' > '+fa+ ' ; cap3 '+fa, shell=True)
-        subprocess.call('bwa mem '+dir+'/iter'+str(i-1)+'_cap3_pass.fasta '+f1+' '+f2+' > '+dir+'/iter'+str(i)+'.sam', shell=True)
-        subprocess.call('grep ">" '+dir+'/iter'+str(i-1)+'_cap3_pass.fasta | sed \'s/^>//\' | while read -r line; do egrep "$line\s" '+dir+'/iter'+str(i)+'.sam | bam2fastx -a -A -s -Q -o '+dir+'/temp.fa - ; if [[ -s '+dir+'/temp.fa ]]; then timeout 20m cap3 '+dir+'/temp.fa; cat '+dir+'/temp.fa.cap.contigs >> ' + soapout + '.scafSeq; fi; done', shell=True)
+        subprocess.call('bwa index '+dir+'/iter'+str(i-1)+'_cap3_pass.fasta; bwa mem '+dir+'/iter'+str(i-1)+'_cap3_pass.fasta '+f1+' '+f2+' > '+dir+'/iter'+str(i)+'.sam', shell=True)
+        subprocess.call('grep ">" '+dir+'/iter'+str(i-1)+'_cap3_pass.fasta | sed \'s/^>//\' | while read -r line; do egrep "$line\s" '+dir+'/iter'+str(i)+'.sam | bam2fastx -a -A -s -Q -o '+dir+'/temp.fa - ; if [[ -s '+dir+'/temp.fa ]]; then timeout.sh 1200 cap3 '+dir+'/temp.fa; cat '+dir+'/temp.fa.cap.contigs >> ' + soapout + '.scafSeq; fi; done', shell=True)
         #subprocess.call('cat ' + dir + '/iter' + str(i-1) + '_cap3_pass.fasta '+fa+'.cap.contigs '+fa+'.cap.singlets >> ' + soapout + '.scafSeq', shell=True)
         #subprocess.call('cat ' + dir + '/iter' + str(i-1) + '_cap3_pass.fasta '+fa+'.cap.contigs >> ' + soapout + '.scafSeq', shell=True)
         subprocess.call('cat ' + dir + '/iter' + str(i-1) + '_cap3_pass.fasta >> ' + soapout + '.scafSeq', shell=True)
@@ -591,14 +591,14 @@ if __name__ == "__main__":
     else:
         split_index(args)
 
-    fidx1 = []
-    fidx2 = []
-    with open(args.d+"/fq_to_file.txt", 'r') as ins:
-        for l in ins:
-            s = l.rstrip().split("\t")
-            fidx1.append(s[0])
-            fidx2.append(s[1])
-    fidx = [fidx1,fidx2]
+    # fidx1 = []
+    # fidx2 = []
+    # with open(args.d+"/fq_to_file.txt", 'r') as ins:
+    #     for l in ins:
+    #         s = l.rstrip().split("\t")
+    #         fidx1.append(s[0])
+    #         fidx2.append(s[1])
+    # fidx = [fidx1,fidx2]
     last = dict()
     final = dict()
 
@@ -626,7 +626,7 @@ if __name__ == "__main__":
             idsfile = "iter"+str(i)+"_ids.txt"
             iout = open(idsfile, 'w')
 
-            p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq | parallel -k -j '+str(args.t)+' bwa fastmap -l '+ ("40" if i == 1 else str(args.fastmap)) +' {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+            p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq.gz | sed \'s/\.gz$//\' | parallel -k -j '+str(args.t)+' bwa fastmap -l '+ ("40" if i == 1 else str(args.fastmap)) +' {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
 
             for l in iter(p1.stdout.readline,''):
                 l = l.rstrip()
@@ -650,8 +650,8 @@ if __name__ == "__main__":
 
             f1 = "iter"+str(i)+"_R1.fastq"
             f2 = "iter"+str(i)+"_R2.fastq"
-            subprocess.call("cat "+args.d+"/*_R1.fastq | fqextract "+idsfile+" > "+f1, shell=True)
-            subprocess.call("cat "+args.d+"/*_R2.fastq | fqextract "+idsfile+" > "+f2, shell=True)
+            subprocess.call("gzip -dc "+args.d+"/*_R1.fastq.gz | fqextract "+idsfile+" > "+f1, shell=True)
+            subprocess.call("gzip -dc "+args.d+"/*_R2.fastq.gz | fqextract "+idsfile+" > "+f2, shell=True)
 
             new = dict()
 
@@ -660,7 +660,7 @@ if __name__ == "__main__":
                     if ID not in seqhash:
                         final[ID] = 0
 
-            idres = [pool.apply_async(assemble, args=(i,ID,seqhash[ID],args,fidx,f1,f2)) for ID in ids if ID not in final]
+            idres = [pool.apply_async(assemble, args=(i,ID,seqhash[ID],args,f1,f2)) for ID in ids if ID not in final]
             idoutput = [p.get() for p in idres]
             #print idoutput
 
