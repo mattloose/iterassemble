@@ -546,7 +546,8 @@ def split_index (args):
         subprocess.call("ls "+args.d+"/seq??? | awk '{system(\"mv \" $0 \" \" $0 \"_R2.fastq\")}'", shell=True)
 
     subprocess.call('ls '+args.d+'/seq*.fastq | parallel -j '+str(args.t)+' bwa index {}', shell=True)
-    subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -k --tag head -n 1 {} | awk '{print $2 \"\t\" $1}' | sed 's/^@//' | sed 's/_R1.fastq$//' > "+args.d+"/fq_to_file.txt", shell=True)
+    subprocess.call('ls '+args.d+'/seq*.fastq | parallel -j '+str(args.t)+' gzip {}', shell=True)
+    #subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -k --tag head -n 1 {} | awk '{print $2 \"\t\" $1}' | sed 's/^@//' | sed 's/_R1.fastq$//' > "+args.d+"/fq_to_file.txt", shell=True)
     with open(args.d+"/info.txt", 'w') as ins:
         ins.write(args.read1 + "\t" + args.read2)
     ins.close()
@@ -650,7 +651,7 @@ if __name__ == "__main__":
 
             f1 = "iter"+str(i)+"_R1.fastq"
             f2 = "iter"+str(i)+"_R2.fastq"
-            subprocess.call("gzip -dc "+args.d+"/*_R1.fastq.gz | fqextract "+idsfile+" > "+f1, shell=True)
+            subprocess.Popen("gzip -dc "+args.d+"/*_R1.fastq.gz | fqextract "+idsfile+" > "+f1, shell=True)
             subprocess.call("gzip -dc "+args.d+"/*_R2.fastq.gz | fqextract "+idsfile+" > "+f2, shell=True)
 
             new = dict()
