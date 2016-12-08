@@ -651,8 +651,8 @@ if __name__ == "__main__":
 
             f1 = "iter"+str(i)+"_R1.fastq"
             f2 = "iter"+str(i)+"_R2.fastq"
-            subprocess.Popen("gzip -dc "+args.d+"/*_R1.fastq.gz | fqextract "+idsfile+" > "+f1, shell=True)
-            subprocess.call("gzip -dc "+args.d+"/*_R2.fastq.gz | fqextract "+idsfile+" > "+f2, shell=True)
+            subprocess.Popen("ls "+args.d+"/*_R1.fastq.gz | parallel -k -j 1 'gzip -dc {} | fqextract "+idsfile+"' > "+f1, shell=True)
+            subprocess.call("ls "+args.d+"/*_R2.fastq.gz | parallel -k -j 1 'gzip -dc {} | fqextract "+idsfile+"' > "+f2, shell=True)
 
             new = dict()
 
