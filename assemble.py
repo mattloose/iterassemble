@@ -669,14 +669,15 @@ if __name__ == "__main__":
                 seqsum = 0
                 maxseq = 0
                 seqcount = 0
-                for record in SeqIO.parse(ID + "_files/iter" + str(i) + "_cap3_pass.fasta", "fasta"):
-                    seqcount += 1
-                    seqsum += len(str(record.seq))
-                    if len(str(record.seq)) > maxseq:
-                        maxseq = len(str(record.seq))
-                    if ID not in new:
-                        new[ID] = dict()
-                    new[ID][seqcount] = str(record.seq)
+                if os.path.exists(ID + "_files/iter" + str(i) + "_cap3_pass.fasta"):
+                    for record in SeqIO.parse(ID + "_files/iter" + str(i) + "_cap3_pass.fasta", "fasta"):
+                        seqcount += 1
+                        seqsum += len(str(record.seq))
+                        if len(str(record.seq)) > maxseq:
+                            maxseq = len(str(record.seq))
+                        if ID not in new:
+                            new[ID] = dict()
+                        new[ID][seqcount] = str(record.seq)
                 print ID + "\t" + str(seqcount) + "\t" + str(maxseq) + "\t" + str(seqsum)
                 logout.write(str(i)+"\t"+ID + "\t" + str(seqcount) + "\t" + str(maxseq) + "\t" + str(seqsum))
                 if ID not in last:
