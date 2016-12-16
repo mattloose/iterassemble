@@ -633,7 +633,7 @@ if __name__ == "__main__":
             for l in iter(p1.stdout.readline,''):
                 l = l.rstrip()
                 data = l.split("\t")
-                if re.match("SQ", l):
+                if re.match("/*/*SQ", l):
                     refseq = data[1]
                     refseq = re.sub("_contig.*$","",refseq)
                 elif re.match("EM", l):
