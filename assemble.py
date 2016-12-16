@@ -68,7 +68,7 @@ def assemble (i, id, arr1, args, upf1, upf2):
         subprocess.call("rm "+soapout1+"* "+soapout2+"* ", shell=True)
     soapout = dir + "/iter" + str(i) + "_soap";
 
-    subprocess.call('SOAPdenovo-63mer all -s '+conf+' -K 63 -p 2 -o '+soapout1, shell=True)
+    subprocess.call(args.soap+' all -s '+conf+' -K 63 -p 2 -o '+soapout1, shell=True)
 
     #subprocess.call('SOAPdenovo-63mer all -s '+conf+' -R -F -p 2 -o '+soapout2, shell=True)
     subprocess.call('cat ' + f1 + ' ' + f2 + " | fml-asm - | awk 'BEGIN{P=1;c=0}{if(P==1){c++;print \">FML_c\" c;}if (P==2){print}; if(P==4)P=0; P++}' > " + soapout2 + '.scafSeq', shell=True)
@@ -571,6 +571,7 @@ if __name__ == "__main__":
     parser.add_argument('-n','--nreads', nargs='?', metavar='INT',default=5,type=int, help = "Contigs with n reads mapped across are kept after each iteration (default: %(default)s)")
     parser.add_argument('-M','--maxcontigs', nargs='?', metavar= 'INT', default=500, type=int, help="Maximum number of contigs per gene after each iteration (default: %(default)s)")
     parser.add_argument('-s','--split', nargs = '?', metavar='INT',default=4000000, type=int, help="FASTQ files will be split on this line number, must be divisible by 4 (default: %(default)s)")
+    parser.add_argument('--soap', nargs = '?', default = "SOAPdenovo-63mer", help = "SOAP denovo program to use, must be in path (default: %(default)s)")
     parser.add_argument('--end_process_only', action='store_true', help='No iterative assembly will be performed, just the end process based on existing files (default: %(default)s)')
 
     args = parser.parse_args()
