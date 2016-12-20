@@ -571,9 +571,9 @@ if __name__ == "__main__":
     parser.add_argument('-n','--nreads', nargs='?', metavar='INT',default=5,type=int, help = "Contigs with n reads mapped across are kept after each iteration (default: %(default)s)")
     parser.add_argument('-M','--maxcontigs', nargs='?', metavar= 'INT', default=500, type=int, help="Maximum number of contigs per gene after each iteration (default: %(default)s)")
     parser.add_argument('-s','--split', nargs = '?', metavar='INT',default=4000000, type=int, help="FASTQ files will be split on this line number, must be divisible by 4 (default: %(default)s)")
+    parser.add_argument('--continue_from', nargs='?', metavar='INT', default=0, type=int, help="Continue iterating from this number (default: %(default)s)")
     parser.add_argument('--soap', nargs = '?', default = "SOAPdenovo-63mer", help = "SOAP denovo program to use, must be in path (default: %(default)s)")
     parser.add_argument('--end_process_only', action='store_true', help='No iterative assembly will be performed, just the end process based on existing files (default: %(default)s)')
-
     args = parser.parse_args()
 
     pool = mp.Pool(processes=args.t)
@@ -621,7 +621,10 @@ if __name__ == "__main__":
         logout = open(logfile, 'w')
         logout.write("Iter\tID\tContig no.\tMax contig length\tTotal length\tStatus\n")
 
-        for i in range(1,args.m+1):
+        if args.continue_from > 0:
+            ref = "iter" + str(args.continue_from+1) + "_ref.fasta"
+
+        for i in range(args.continue_from + 1, args.m + 1):
 
             seqhash = dict()
             refseq = ''
@@ -657,10 +660,9 @@ if __name__ == "__main__":
 
             new = dict()
 
-            if i == 1:
-                for ID in ids:
-                    if ID not in seqhash:
-                        final[ID] = 0
+            for ID in ids:
+                if ID not in final and ID not in seqhash:
+                    final[ID] = i-1
 
             idres = [pool.apply_async(assemble, args=(i,ID,seqhash[ID],args,f1,f2)) for ID in ids if ID not in final]
             idoutput = [p.get() for p in idres]
