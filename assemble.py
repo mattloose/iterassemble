@@ -68,7 +68,7 @@ def assemble (i, id, arr1, args, upf1, upf2):
         subprocess.call("rm "+soapout1+"* "+soapout2+"* ", shell=True)
     soapout = dir + "/iter" + str(i) + "_soap";
 
-    subprocess.call(args.soap+' all -s '+conf+' -K 63 -p 2 -o '+soapout1, shell=True)
+    subprocess.call('timeout.sh 3600 '+args.soap+' all -s '+conf+' -K 63 -p 2 -o '+soapout1, shell=True)
 
     #subprocess.call('SOAPdenovo-63mer all -s '+conf+' -R -F -p 2 -o '+soapout2, shell=True)
     subprocess.call('cat ' + f1 + ' ' + f2 + " | fml-asm - | awk 'BEGIN{P=1;c=0}{if(P==1){c++;print \">FML_c\" c;}if (P==2){print}; if(P==4)P=0; P++}' > " + soapout2 + '.scafSeq', shell=True)
