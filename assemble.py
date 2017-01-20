@@ -57,7 +57,7 @@ def assemble (i, id, arr1, args, upf1, upf2):
 
     conf = dir + "/conf.txt"
     with open(conf, 'w') as ins:
-        ins.write("max_rd_len=150\n[LIB]\navg_ins="+str(args.insert)+"\nreverse_seq=0\nasm_flags=1\nrd_len_cutoff=100\nrank=1\npair_num_cutoff=3\n")
+        ins.write("max_rd_len="+str(args.length)+"\n[LIB]\navg_ins="+str(args.insert)+"\nreverse_seq=0\nasm_flags=1\nrd_len_cutoff="+str(args.length)+"\nrank=1\npair_num_cutoff=3\n")
         ins.write("q1="+f1+"\n")
         ins.write("q2="+f2+"\n")
     ins.close()
@@ -564,6 +564,7 @@ if __name__ == "__main__":
     parser.add_argument('-m', nargs='?', metavar='INT', default=50, type=int, help='Maximum number of iterations to make (default: %(default)s)')
     parser.add_argument('-d', nargs='?', metavar='dir/', default='Split_files/', help='Directory for fastq indexes, will be overwritten (default: %(default)s)')
     parser.add_argument('-i','--insert', nargs='?', metavar='INT', default=200, type=int, help='Average insert size (default: %(default)s)')
+    parser.add_argument('-l','--length', nargs='?', metavar='INT', default=100, type=int, help='Maximum read length (default: %(default)s)')
     parser.add_argument('-e','--endsize', nargs='?', metavar='INT', default=600, type=int, help='Number of bases from each end of the contigs to map (default: %(default)s)')
     parser.add_argument('-r','--remove', nargs='?', metavar='INT', default=200, type=int, help='After 10 iterations, remove contigs shorter than INT (default: %(default)s)')
     parser.add_argument('-f','--fastmap', nargs='?', metavar='INT', default=60, type=int, help='Minimum SMEM length permited in bwa fastmap (default: %(default)s)')
