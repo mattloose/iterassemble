@@ -567,7 +567,8 @@ if __name__ == "__main__":
     parser.add_argument('-l','--length', nargs='?', metavar='INT', default=100, type=int, help='Maximum read length (default: %(default)s)')
     parser.add_argument('-e','--endsize', nargs='?', metavar='INT', default=600, type=int, help='Number of bases from each end of the contigs to map (default: %(default)s)')
     parser.add_argument('-r','--remove', nargs='?', metavar='INT', default=200, type=int, help='After 10 iterations, remove contigs shorter than INT (default: %(default)s)')
-    parser.add_argument('-f','--fastmap', nargs='?', metavar='INT', default=60, type=int, help='Minimum SMEM length permited in bwa fastmap (default: %(default)s)')
+    parser.add_argument('-F','--fastmap1', nargs='?', metavar='INT', default=40, type=int, help='Minimum SMEM length permited in bwa fastmap for first iteration (default: %(default)s)')
+    parser.add_argument('-f','--fastmap', nargs='?', metavar='INT', default=60, type=int, help='Minimum SMEM length permited in bwa fastmap for later iterations (default: %(default)s)')
     parser.add_argument('-c','--culling', nargs='?', metavar='INT', default=2, type=int, help="After each iteration blast step uses this culling_limit (default: %(default)s)")
     parser.add_argument('-n','--nreads', nargs='?', metavar='INT',default=5,type=int, help = "Contigs with n reads mapped across are kept after each iteration (default: %(default)s)")
     parser.add_argument('-M','--maxcontigs', nargs='?', metavar= 'INT', default=500, type=int, help="Maximum number of contigs per gene after each iteration (default: %(default)s)")
@@ -635,7 +636,7 @@ if __name__ == "__main__":
             idsfile = "iter"+str(i)+"_ids.txt"
             iout = open(idsfile, 'w')
 
-            p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq.gz | sed \'s/\.gz$//\' | parallel -k -j '+str(args.t)+' bwa fastmap -l '+ ("40" if i == 1 else str(args.fastmap)) +' {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+            p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq.gz | sed \'s/\.gz$//\' | parallel -k -j '+str(args.t)+' bwa fastmap -l '+ (str(args.fastmap1) if i == 1 else str(args.fastmap)) +' {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
 
             for l in iter(p1.stdout.readline,''):
                 l = l.rstrip()
