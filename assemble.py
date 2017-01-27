@@ -531,6 +531,8 @@ def final_process (args, i, ID):
 
     finallogout.close()
 
+    return 1
+
 
 
 
@@ -555,6 +557,7 @@ def split_index (args):
     with open(args.d+"/info.txt", 'w') as ins:
         ins.write(args.read1 + "\t" + args.read2)
     ins.close()
+
 
 
 
