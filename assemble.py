@@ -133,6 +133,9 @@ def final_process (args, i, ID):
     dir = ID + "_files"
     print dir
 
+    finallog = dir + "/final.log"
+    finallogout = open(finallog, "w")
+
     infile = dir +"/iter" + str(i) + "_cap3_pass.fasta"
     scaffile = dir +"/iter" + str(i) + "_cap3_pass.scaffolds.fasta"
     allr1 = dir + "/allR1.fastq"
@@ -173,7 +176,7 @@ def final_process (args, i, ID):
     p1 = subprocess.Popen('blastn -db '+passfile+' -query '+args.cDNA+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
-        print l
+        finallogout.write(l+"\n")
         data = l.split("\t")
         if data[0] == ID:
             if (int(data[8]) > int(data[9])):
@@ -186,7 +189,7 @@ def final_process (args, i, ID):
         seqhash[seqid] = tmpseq.reverse_complement()
 
     if len(seqhash) == 1:
-        print "Only one sequence"
+        finallogout.write("Only one sequence\n")
         with open(finalfile, 'w') as ins:
             for seqid in seqhash:
                 ins.write(">"+ID+"\n")
@@ -202,7 +205,7 @@ def final_process (args, i, ID):
     done = []
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
-        print l
+        finallogout.write(l+"\n")
         data = l.split("\t")
         if data[0] != data[1]:
             if data[0] not in infodict:
@@ -230,7 +233,7 @@ def final_process (args, i, ID):
                     infodict[data[0]][data[1]]['smax'] = int(data[8])
     for i in infodict:
         for i2 in infodict[i]:
-            print i+"\t"+i2+"\t"+str(infodict[i][i2]['alen'])
+            finallogout.write(i+"\t"+i2+"\t"+str(infodict[i][i2]['alen'])+"\n")
             # if infodict[i][i2]['qmin'] < 500 and infodict[i][i2]['qmax'] < infodict[i][i2]['qlen']-500 and (infodict[i][i2]['smin'] < 500 or infodict[i][i2]['smax'] > infodict[i][i2]['slen']-500):
             #     print "At start of query, and end/start of subject"
             #     continue
@@ -247,14 +250,14 @@ def final_process (args, i, ID):
                     gr += 1
                     groups[gr] = dict()
                     groups[gr][i+"+"+i2] = infodict[i][i2]['alen']
-                print "Good to align"
+                finallogout.write("Good to align\n")
 
     out = open(midfile, 'w')
     tmpfile = dir+"/alntmp.fa"
     keep = dict()
 
     for g in groups:
-        print "Group"+str(g)
+        finallogout.write("Group"+str(g)+"\n")
 
         ids = dict()
         for i in groups[g]:
@@ -263,7 +266,7 @@ def final_process (args, i, ID):
 
         with open(tmpfile, 'w') as ins:
             for i in ids:
-                print "\t"+i
+                finallogout.write("\t"+i+"\n")
                 ins.write(">"+i+"\n"+str(seqhash[i])+"\n")
         ins.close()
 
@@ -272,18 +275,18 @@ def final_process (args, i, ID):
         # muscle_cline = MuscleCommandline(input=tmpfile)
         stdout, stderr = p1.communicate()
         align = AlignIO.read(StringIO(stdout), "fasta")
-        print(align)
+        finallogout.write(str(align)+"\n")
 
         summary_align = AlignInfo.SummaryInfo(align)
         consensus = summary_align.dumb_consensus(ambiguous='N')
-        print str(consensus).upper()
+        finallogout.write(str(consensus).upper()+"\n")
 
         n = 0
         for a in str(consensus).upper():
             if a == "N":
                 n += 1
         pern = (float(n)/float(len(str(consensus))))*100
-        print "Percent N: "+str(pern)+"%"
+        finallogout.write("Percent N: "+str(pern)+"%"+"\n")
         if pern < 5:
             for i in ids:
                 done.append(i)
@@ -294,35 +297,35 @@ def final_process (args, i, ID):
         if len(ids) == 2:
             continue
 
-        print "Couldn't align all seq together, so doing it one at a time"
+        finallogout.write("Couldn't align all seq together, so doing it one at a time\n")
         alnorder = []
         aord = dict()
         conhash = dict()
         concount = 0
         for i in groups[g]:
-            print "\t"+i+"\t"+str(groups[g][i])
+            finallogout.write("\t"+i+"\t"+str(groups[g][i])+"\n")
             aord[groups[g][i]] = i
         for al in sorted(aord, reverse=True):
-            print str(al)+"\t"+aord[al]
+            finallogout.write(str(al)+"\t"+aord[al]+"\n")
             alnorder.append(aord[al])
 
         newseq  = dict()
 
         for p in range(0,len(alnorder)):
-            print "Aligning "+alnorder[p]
+            finallogout.write("Aligning "+alnorder[p]+"\n")
             i,i2 = alnorder[p].split("+")
 
             if i in conhash and i2 not in conhash:
-                print "Adding to "+conhash[i]
+                finallogout.write("Adding to "+conhash[i]+"\n")
                 i = conhash[i]
             elif i2 in conhash and i not in conhash:
-                print "Adding to "+conhash[i2]
+                finallogout.write("Adding to "+conhash[i2]+"\n")
                 i2 = conhash[i2]
             elif i in conhash and i2 in conhash:
-                print "Repeat!"
+                finallogout.write("Repeat!\n")
                 continue
             with open(tmpfile, 'w') as ins:
-                print "\t"+i+"\t"+i2
+                finallogout.write("\t"+i+"\t"+i2+"\n")
                 ins.write(">"+i+"\n"+str(seqhash[i])+"\n")
                 ins.write(">"+i2+"\n"+str(seqhash[i2])+"\n")
             ins.close()
@@ -332,28 +335,27 @@ def final_process (args, i, ID):
             #muscle_cline = MuscleCommandline(input=tmpfile)
             stdout, stderr = p1.communicate()
             align = AlignIO.read(StringIO(stdout), "fasta")
-            print(align)
+            finallogout.write(str(align)+"\n")
 
             summary_align = AlignInfo.SummaryInfo(align)
             consensus = summary_align.dumb_consensus(ambiguous='N')
-            print str(consensus).upper()
+            finallogout.write(str(consensus).upper()+'\n')
 
             n = 0
             for a in str(consensus).upper():
                 if a == "N":
                     n += 1
-            print n
+            finallogout.write(n+'\n')
             pern = (float(n)/float(len(str(consensus))))*100
-            print pern
-            print "Percent N: "+str(pern)+"%"
+            finallogout.write("Percent N: "+str(pern)+"%\n")
             if pern < 5:
                 if "Consensus" not in i and "Consensus" not in i2:
                     concount += 1
                 if "Consensus" in i and "Consensus" in i2:
-                    print "Aligned two consensus seq"
+                    finallogout.write("Aligned two consensus seq\n")
                     c1 = [int(s) for s in i.split() if s.isdigit()]
                     c2 = [int(s) for s in i2.split() if s.isdigit()]
-                    print str(c1)+"\t"+str(c2)
+                    finallogout.write(str(c1)+"\t"+str(c2)+"\n")
                     concount += 1
                     newseq.pop(c1, None)
                     newseq.pop(c2, None)
@@ -385,7 +387,7 @@ def final_process (args, i, ID):
     out.close()
 
     if (len(list(SeqIO.parse(midfile, "fasta"))) == 1):
-        print "Only one sequence left"
+        finallogout.write("Only one sequence left\n")
         subprocess.call("cat "+midfile+" | sed 's/^>.*$/>"+ID+"/' > "+finalfile, shell=True)
         return
 
@@ -398,7 +400,7 @@ def final_process (args, i, ID):
     p1 = subprocess.Popen('blastn -db '+midfile+' -query '+args.cDNA+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
-        print l
+        finallogout.write(l+"\n")
         data = l.split("\t")
         if data[0] == ID:
             if int(data[6]) not in orderdict:
@@ -407,11 +409,11 @@ def final_process (args, i, ID):
     order = []
     for start in sorted(orderdict):
         for qstart in sorted(orderdict[start], reverse=True):
-            print orderdict[start][qstart]+"\t"+str(start)+"\t"+str(qstart)
+            finallogout.write(orderdict[start][qstart]+"\t"+str(start)+"\t"+str(qstart)+"\n")
             if orderdict[start][qstart] not in order:
                 order.append(orderdict[start][qstart])
 
-    print order
+    finallogout.write(str(order)+"\n")
 
 
     finalseq = []
@@ -422,16 +424,16 @@ def final_process (args, i, ID):
             skip = 0
             continue
         if (a == len(order) - 1):
-            print "Last one"
+            finallogout.write("Last one\n")
             finalseq.append(str(keep[order[a]]))
             break
 
         b = a+1
 
-        print "Current: "+order[a]+"\tNext: "+order[b]
+        finallogout.write("Current: "+order[a]+"\tNext: "+order[b]+"\n")
 
         if len(keep[order[a]]) == 0:
-            print "No sequence, moving onto next!"
+            finallogout.write("No sequence, moving onto next!\n")
             # a -= 1
             # print "Now: "+order[a]+"\tNext: "+order[b]
             continue
@@ -452,7 +454,7 @@ def final_process (args, i, ID):
         p1 = subprocess.Popen('blastn -subject '+tmpfile2+' -query '+tmpfile+' -outfmt 6 -evalue 1e-10',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
         for l in iter(p1.stdout.readline,''):
             l = l.rstrip()
-            print l
+            finallogout.write(l+"\n")
             data = l.split("\t")
             if (int(data[7]) >= len(str(keep[order[a]])) - 500):
                 isgood += 1
@@ -464,7 +466,7 @@ def final_process (args, i, ID):
                 smax = int(data[9])
         if (isgood >= 2):
             overlap = []
-            print "this is a good overlap, min: "+str(smin)+" max: "+str(smax)
+            finallogout.write("this is a good overlap, min: "+str(smin)+" max: "+str(smax)+"\n")
             tmpseq = keep[order[a]]
             # print "First:"
             # print str(tmpseq)
@@ -493,17 +495,17 @@ def final_process (args, i, ID):
             #muscle_cline = MuscleCommandline(input=tmpfile)
             stdout, stderr = p1.communicate()
             align = AlignIO.read(StringIO(stdout), "fasta")
-            print(align)
+            finallogout.write(str(align)+"\n")
             summary_align = AlignInfo.SummaryInfo(align)
             consensus = summary_align.dumb_consensus(ambiguous='N')
-            print str(consensus).upper()
+            finallogout.write(str(consensus).upper()+"\n")
 
             n = 0
             for c in str(consensus).upper():
                 if c == "N":
                     n += 1
             pern = (float(n)/float(len(str(consensus))))*100
-            print "Percent N: "+str(pern)+"%"
+            finallogout.write("Percent N: "+str(pern)+"%\n")
 
             if pern < 15:
                 tmpseq = keep[order[a]]
@@ -513,12 +515,12 @@ def final_process (args, i, ID):
                 finalseq.append(str(keep[order[a]]).upper())
                 # finalseq.append(str(consensus))
             else:
-                print "Overlap not good enough"
+                finallogout.write("Overlap not good enough\n")
                 finalseq.append(str(keep[order[a]]))
                 finalseq.append("N"*500)
 
         else:
-            print "No overlap!"
+            finallogout.write("No overlap!\n")
             finalseq.append(str(keep[order[a]]))
             finalseq.append("N"*500)
 
@@ -526,6 +528,8 @@ def final_process (args, i, ID):
         ins.write(">"+ID+"\n")
         ins.write("".join(finalseq)+"\n")
     ins.close()
+
+    finallogout.close()
 
 
 
@@ -735,11 +739,11 @@ if __name__ == "__main__":
     for ID in ids:
         if ID not in final:
             final[ID] = args.m
-        if final[ID] > 0:
-            final_process(args, final[ID], ID)
+        # if final[ID] > 0:
+        #     final_process(args, final[ID], ID)
 
-    # finalres = [pool.apply_async(final_process), args=(args, final[ID], ID)) for ID in ids]
-    # finaloutput = [p.get() for p in finalres]
+    finalres = [pool.apply_async(final_process, args=(args, final[ID], ID)) for ID in ids if final[ID] > 0]
+    finaloutput = [p.get() for p in finalres]
 
 
     finalfa = "Final_sequences.fasta"
