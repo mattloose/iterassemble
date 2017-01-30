@@ -55,6 +55,8 @@ for l in iter(p2.stdout.readline,''):
 outfile = args.genome+"_gmapparsed"
 out = open(outfile, 'w')
 
+seqlens = []
+
 for record in SeqIO.parse(args.genome, "fasta"):
     newseq = []
     if record.name not in gmapres:
@@ -80,5 +82,19 @@ for record in SeqIO.parse(args.genome, "fasta"):
             #print "Last chunk is good!"
             newseq.append(str(record.seq[laststart-1:len(record.seq)]))
             break
+    seqlens.append(len("".join(newseq)))
     out.write(">"+record.name+"\n")
     out.write(("N"*500).join(newseq)+"\n")
+
+seqlens = sorted(seqlens)
+print "Num: "+str(len(seqlens))
+print "Max: "+str(max(seqlens))
+print "Min: "+str(min(seqlens))
+print "Total: "+str(sum(seqlens))
+half = float(sum(seqlens))/2.0
+cum = 0
+for l in seqlens:
+    cum += l
+    if cum >= half:
+        print "N50: "+str(l)
+        break
