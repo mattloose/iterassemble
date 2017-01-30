@@ -289,7 +289,7 @@ def final_process (args, i, ID):
             if a == "N":
                 n += 1
         pern = (float(n)/float(len(str(consensus))))*100
-        finallogout.write("Percent N: "+str(pern)+"%"+"\n")
+        finallogout.write("Percent N: "+str(pern)+"%\n")
         if pern < 5:
             for i in ids:
                 done.append(i)
@@ -348,7 +348,6 @@ def final_process (args, i, ID):
             for a in str(consensus).upper():
                 if a == "N":
                     n += 1
-            finallogout.write(n+'\n')
             pern = (float(n)/float(len(str(consensus))))*100
             finallogout.write("Percent N: "+str(pern)+"%\n")
             if pern < 5:
