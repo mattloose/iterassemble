@@ -153,6 +153,9 @@ def final_process (args, i, ID):
 
     passfile = dir +"/iter" + str(i) + "_cap3_pass.scaffolds.fasta.renamed"
 
+    if not os.path.exists(scaffile):
+        subprocess.call("cp "+infile+" "+scaffile, shell=True)
+
     sc = 0
     with open(passfile, 'w') as ins:
         for record in SeqIO.parse(scaffile, "fasta"):
@@ -195,7 +198,7 @@ def final_process (args, i, ID):
                 ins.write(">"+ID+"\n")
                 ins.write(str(seqhash[seqid])+"\n")
         ins.close()
-        return
+        return ID
 
     p1 = subprocess.Popen("blastn -query "+passfile+" -db "+passfile+" -perc_identity 95 -outfmt '6 std qlen slen' ", shell=True,universal_newlines = True, stdout=subprocess.PIPE)
 
@@ -389,7 +392,7 @@ def final_process (args, i, ID):
     if (len(list(SeqIO.parse(midfile, "fasta"))) == 1):
         finallogout.write("Only one sequence left\n")
         subprocess.call("cat "+midfile+" | sed 's/^>.*$/>"+ID+"/' > "+finalfile, shell=True)
-        return
+        return ID
 
 
     tmpfile = dir+"/blasttmp.fa"
@@ -531,7 +534,7 @@ def final_process (args, i, ID):
 
     finallogout.close()
 
-    return 1
+    return ID
 
 
 
@@ -667,8 +670,9 @@ if __name__ == "__main__":
 
             f1 = "iter"+str(i)+"_R1.fastq"
             f2 = "iter"+str(i)+"_R2.fastq"
-            subprocess.Popen("ls "+args.d+"/*_R1.fastq.gz | parallel -k -j 1 'gzip -dc {} | fqextract "+idsfile+"' > "+f1, shell=True)
+            ex1 = subprocess.Popen("ls "+args.d+"/*_R1.fastq.gz | parallel -k -j 1 'gzip -dc {} | fqextract "+idsfile+"' > "+f1, shell=True)
             subprocess.call("ls "+args.d+"/*_R2.fastq.gz | parallel -k -j 1 'gzip -dc {} | fqextract "+idsfile+"' > "+f2, shell=True)
+            ex1.wait()
 
             new = dict()
 
