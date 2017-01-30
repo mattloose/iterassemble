@@ -6,16 +6,22 @@ import argparse
 from Bio import SeqIO
 
 parser = argparse.ArgumentParser(description='Parse vgw output using gmap')
-parser.add_argument('genome', metavar = 'FASTA', help='vgw output file')
-parser.add_argument('transcripts', metavar = 'FASTA', help='transcript sequences')
+parser.add_argument('genome', help='vgw output file')
+parser.add_argument('transcripts', help='transcript sequences')
+parser.add_argument('-o','--overwrite', action='store_true', help='overwrite gmap database')
 
 args = parser.parse_args()
 
-subprocess.call("gmap_build -d tmpdb -D ./gmapdb "+args.genome, shell=True)
+if not os.path.exists("gmapdb/"):
+    subprocess.call("mkdir gmapdb")
+    args.overwrite = True
+
+if args.overwrite or not os.path.exists("gmapdb/"+args.genome):
+    subprocess.call("gmap_build -d "+args.genome+" -D ./gmapdb "+args.genome, shell=True)
 
 gmapres = dict()
 
-p1 = subprocess.Popen("gmap -d tmpdb -D ./gmapdb -f 3 "+args.transcripts, shell=True, stdout=subprocess.PIPE)
+p1 = subprocess.Popen("gmap -d "+args.genome+" -D ./gmapdb -f 3 "+args.transcripts, shell=True, stdout=subprocess.PIPE)
 
 for l in iter(p1.stdout.readline,''):
     l = l.rstrip()
