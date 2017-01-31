@@ -65,7 +65,7 @@ with open(args.gff3, 'r') as ins:
             path = info[2].split(".")[-1]
             mrna = info[0].split(".")[-1]
             #print "Gene: %s \t Path: %s \t mRNA: %s" % (gene, path, mrna)
-            newid = gene+":"+path+":"+mrna
+            newid = gene+"@"+path+"@"+mrna
             if newid not in resdict:
                 resdict[newid] = dict()
                 resdict[newid]['exons'] = 0
@@ -124,7 +124,7 @@ ins.close()
 with open(args.summary, 'w') as ins:
     ins.write("Genome\tGene\tPath\tmRNA\tTranscript.length\tvgw.length\tvgw.minus500.length\tNo.Exons\t5prime.bp\t3prime.bp\tunmapped.internal.bp\tunmapped.external.bp\tmax.intron\tmin.intron\tmean.intron\tno.bridged\tmin.bridged\tmax.bridged\tmean.bridged\n")
     for i in resdict:
-        names = i.split(":")
+        names = i.split("@")
         ins.write(resdict[i]['genome']+"\t")
         ins.write("\t".join(names)+"\t")
         ins.write("%s\t%s\t%s\t" % (len(transhash[names[0]]), len(genomehash[resdict[i]['genome']]), len(genomehash[resdict[i]['genome']]) - (500 * ((resdict[i]['exons'] - 1) - resdict[i]['introns_bridged']))))
