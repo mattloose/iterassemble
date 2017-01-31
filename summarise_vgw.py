@@ -53,7 +53,7 @@ with open(args.gff3, 'r') as ins:
                 info = last[8].split(";")
                 coords = info[3].split(" ")
                 #print "Genome len: "+str(len(genomehash[gene]))
-                resdict[newid]['3prime'] = len(genomehash[gene]) - int(last[4])
+                resdict[newid]['3prime'] = len(genomehash[last[0]]) - int(last[4])
                 #print "Trans len: "+str(len(transhash[gene]))
                 if coords[3] == "+" and int(coords[2]) < len(transhash[gene]):
                     extra = len(transhash[gene]) - int(coords[2])
@@ -76,6 +76,7 @@ with open(args.gff3, 'r') as ins:
                 resdict[newid]['bridged'] = []
                 resdict[newid]['5prime'] = 0
                 resdict[newid]['3prime'] = 0
+                resdict[newid]['genome'] = data[0]
         if data[2] == 'exon':
             resdict[newid]['exons'] += 1
             if 'exon1;' in data[8]:
@@ -98,7 +99,7 @@ with open(args.gff3, 'r') as ins:
                 #print "Genome: %s - %s" % (last[4], data[3])
                 length = int(data[3]) - int(last[4])
                 resdict[newid]['introns'].append(length)
-                intronseq = genomehash[gene][int(last[4]):int(data[3])]
+                intronseq = genomehash[data[0]][int(last[4]):int(data[3])]
                 #print intronseq
                 if not "N"*500 in intronseq:
                     #print "BRIDGED"
@@ -110,7 +111,7 @@ with open(args.gff3, 'r') as ins:
             info = last[8].split(";")
             coords = info[3].split(" ")
             #print "Genome len: "+str(len(genomehash[gene]))
-            resdict[newid]['3prime'] = len(genomehash[gene]) - int(last[4])
+            resdict[newid]['3prime'] = len(genomehash[last[0]]) - int(last[4])
             #print "Trans len: "+str(len(transhash[gene]))
             if coords[3] == "+" and int(coords[2]) < len(transhash[gene]):
                 extra = len(transhash[gene]) - int(coords[2])
@@ -121,11 +122,12 @@ with open(args.gff3, 'r') as ins:
 ins.close()
 
 with open(args.summary, 'w') as ins:
-    ins.write("Gene\tPath\tmRNA\tTranscript.length\tvgw.length\tvgw.minus500.length\tNo.Exons\t5prime.bp\t3prime.bp\tunmapped.internal.bp\tunmapped.external.bp\tmax.intron\tmin.intron\tmean.intron\tno.bridged\tmin.bridged\tmax.bridged\tmean.bridged\n")
+    ins.write("Genome\tGene\tPath\tmRNA\tTranscript.length\tvgw.length\tvgw.minus500.length\tNo.Exons\t5prime.bp\t3prime.bp\tunmapped.internal.bp\tunmapped.external.bp\tmax.intron\tmin.intron\tmean.intron\tno.bridged\tmin.bridged\tmax.bridged\tmean.bridged\n")
     for i in resdict:
         names = i.split(":")
+        ins.write(resdict[i]['genome']+"\t")
         ins.write("\t".join(names)+"\t")
-        ins.write("%s\t%s\t%s\t" % (len(transhash[names[0]]), len(genomehash[names[0]]), len(genomehash[names[0]]) - (500 * ((resdict[i]['exons'] - 1) - resdict[i]['introns_bridged']))))
+        ins.write("%s\t%s\t%s\t" % (len(transhash[names[0]]), len(genomehash[resdict[i]['genome']]), len(genomehash[resdict[i]['genome']]) - (500 * ((resdict[i]['exons'] - 1) - resdict[i]['introns_bridged']))))
         ins.write("%s\t%s\t%s\t%s\t%s\t" % (resdict[i]['exons'], resdict[i]['5prime'], resdict[i]['3prime'], resdict[i]['bp_notmapped_int'], resdict[i]['bp_notmapped_ext']))
         if resdict[i]['exons'] > 1:
             introns = resdict[i]['introns']
