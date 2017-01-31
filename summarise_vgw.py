@@ -62,8 +62,8 @@ with open(args.gff3, 'r') as ins:
                 last = []
             info = data[8].split(";")
             gene = info[1].split("=")[1]
-            path = info[2].split(".")[1]
-            mrna = info[0].split(".")[1]
+            path = info[2].split(".")[-1]
+            mrna = info[0].split(".")[-1]
             #print "Gene: %s \t Path: %s \t mRNA: %s" % (gene, path, mrna)
             newid = gene+":"+path+":"+mrna
             if newid not in resdict:
