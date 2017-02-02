@@ -14,7 +14,7 @@ parser.add_argument('-g','--gff', nargs='?', default='parsing.gff', help='interm
 args = parser.parse_args()
 
 if not os.path.exists("gmapdb/"):
-    subprocess.call("mkdir gmapdb")
+    subprocess.call("mkdir gmapdb", shell=True)
     args.overwrite = True
 
 if args.overwrite or not os.path.exists("gmapdb/"+args.genome):
