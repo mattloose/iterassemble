@@ -122,7 +122,7 @@ with open(args.gff3, 'r') as ins:
 ins.close()
 
 with open(args.summary, 'w') as ins:
-    ins.write("Genome\tGene\tPath\tmRNA\tTranscript.length\tvgw.length\tvgw.minus500.length\tNo.Exons\t5prime.bp\t3prime.bp\tunmapped.internal.bp\tunmapped.external.bp\tmax.intron\tmin.intron\tmean.intron\tno.bridged\tmin.bridged\tmax.bridged\tmean.bridged\n")
+    ins.write("Genome\tGene\tPath\tmRNA\tTranscript.length\tvgw.length\tvgw.minus500.length\tNo.Exons\t5prime.bp\t3prime.bp\tunmapped.internal.bp\tunmapped.external.bp\tmax.intron\tmin.intron\tmean.intron\tno.bridged\tmax.bridged\tmin.bridged\tmean.bridged\n")
     for i in resdict:
         names = i.split("@")
         ins.write(resdict[i]['genome']+"\t")

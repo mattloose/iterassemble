@@ -9,6 +9,7 @@ parser = argparse.ArgumentParser(description='Parse vgw output using gmap')
 parser.add_argument('genome', help='vgw output file')
 parser.add_argument('transcripts', help='transcript sequences')
 parser.add_argument('-o','--overwrite', action='store_true', help='overwrite gmap database')
+parser.add_argument('-g','--gff', nargs='?', default='parsing.gff', help='intermediate gff filename, default (%(default)s)')
 
 args = parser.parse_args()
 
@@ -21,20 +22,21 @@ if args.overwrite or not os.path.exists("gmapdb/"+args.genome):
 
 gmapres = dict()
 
-p1 = subprocess.Popen("gmap -d "+args.genome+" -D ./gmapdb -f 3 "+args.transcripts, shell=True, stdout=subprocess.PIPE)
+subprocess.call("gmap -d "+args.genome+" -D ./gmapdb -f 3 "+args.transcripts+" > "+args.gff, shell=True)
 
-for l in iter(p1.stdout.readline,''):
-    l = l.rstrip()
-    data = l.split("\t")
-    if len(data) < 4:
-        continue
-    if "Target="+data[0]+" " not in data[8]:
-        continue
-    #print data
-    if data[0] not in gmapres:
-        gmapres[data[0]] = []
-    gmapres[data[0]].append(int(data[3]))
-
+with open(args.gff, 'r') as ins:
+    for l in ins:
+        l = l.rstrip()
+        data = l.split("\t")
+        if len(data) < 4:
+            continue
+        if "Target="+data[0]+" " not in data[8]:
+            continue
+        #print data
+        if data[0] not in gmapres:
+            gmapres[data[0]] = []
+        gmapres[data[0]].append(int(data[3]))
+ins.close()
 
 subprocess.call("makeblastdb -in "+args.genome+" -dbtype nucl", shell=True)
 
