@@ -17,14 +17,16 @@ import bisect
 def load_ids(file):
 
     idlist = []
-    with open(file,'r') as ins:
-        for line in ins:
-            if re.match(">", line):
-                line = re.sub("^>","",line)
-                line = re.sub("\s.*$","",line)
-                idlist.append(line)
+    for record in SeqIO.parse(file, 'fasta'):
+        idlist.append(record.name)
+        dir = record.name + "_files"
+        if not os.path.exists(dir):
+            subprocess.call('mkdir '+dir, shell=True)
+        with open(dir+"/transcript.fasta", 'w') as ins:
+            ins.write(">"+record.name+"\n")
+            ins.write(str(record.seq)+"\n")
+        ins.close()
 
-    ins.close()
     return idlist
 
 
@@ -36,6 +38,8 @@ def assemble (i, id, arr1, args, upf1, upf2):
     f1 = dir + "/iter" + str(i) + "_R1.fastq"
     f2 = dir + "/iter" + str(i) + "_R2.fastq"
     fids = dir + "/iter" + str(i) + "_ids.txt"
+
+    transcript = dir + "/transcript.fasta"
 
     with open(fids, 'w') as ins:
         ins.write("\n".join(arr1))
@@ -97,7 +101,7 @@ def assemble (i, id, arr1, args, upf1, upf2):
     keepseq = []
 
     subprocess.call('makeblastdb -in '+cap3+' -dbtype nucl -parse_seqids', shell=True)
-    p1 = subprocess.Popen('blastn -db '+cap3+' -query '+args.cDNA+' -outfmt 6 -culling_limit '+str(args.culling),shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    p1 = subprocess.Popen('blastn -db '+cap3+' -query '+transcript+' -outfmt 6 -culling_limit '+str(args.culling),shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
         data = l.split("\t")
@@ -135,6 +139,8 @@ def final_process (args, i, ID):
 
     finallog = dir + "/final.log"
     finallogout = open(finallog, "w")
+
+    transcript = dir + "/transcript.fasta"
 
     infile = dir +"/iter" + str(i) + "_cap3_pass.fasta"
     scaffile = dir +"/iter" + str(i) + "_cap3_pass.scaffolds.fasta"
@@ -176,7 +182,7 @@ def final_process (args, i, ID):
     subprocess.call("makeblastdb -dbtype nucl -in "+passfile, shell=True)
 
     revcom = dict()
-    p1 = subprocess.Popen('blastn -db '+passfile+' -query '+args.cDNA+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    p1 = subprocess.Popen('blastn -db '+passfile+' -query '+transcript+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
         finallogout.write(l+"\n")
@@ -399,7 +405,7 @@ def final_process (args, i, ID):
     subprocess.call("makeblastdb -dbtype nucl -in "+midfile, shell=True)
 
     orderdict = dict()
-    p1 = subprocess.Popen('blastn -db '+midfile+' -query '+args.cDNA+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    p1 = subprocess.Popen('blastn -db '+midfile+' -query '+transcript+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
         finallogout.write(l+"\n")
