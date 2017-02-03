@@ -15,7 +15,7 @@ parser.add_argument('-s','--summary', nargs='?', default='vgw_summary.txt', help
 args = parser.parse_args()
 
 if not os.path.exists("gmapdb/"):
-    subprocess.call("mkdir gmapdb")
+    subprocess.call("mkdir gmapdb", shell=True)
     args.overwrite = True
 
 if args.overwrite or not os.path.exists("gmapdb/"+args.genome):
@@ -142,3 +142,4 @@ with open(args.summary, 'w') as ins:
             ins.write("%s\t%s\t%s\n" % (max(bridged), min(bridged), sum(bridged)/len(bridged)))
         else:
             ins.write("0\t0\t0\n")
+ins.close()
