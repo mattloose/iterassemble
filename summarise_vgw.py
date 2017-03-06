@@ -30,7 +30,7 @@ for record in SeqIO.parse(args.genome, 'fasta'):
     count = 0
     for m in re.finditer("N"*500, str(record.seq)):
         count += 1
-    genomeinfo[record.name] = count + 1
+    genomeinfo[record.name] = count
 
 transhash = dict()
 
