@@ -4,6 +4,7 @@ import subprocess
 import os
 import argparse
 from Bio import SeqIO
+import re
 
 parser = argparse.ArgumentParser(description='Summarise vgw results using gmap')
 parser.add_argument('genome', help='vgw output file')
@@ -22,16 +23,21 @@ if args.overwrite or not os.path.exists("gmapdb/"+args.genome):
     subprocess.call("gmap_build -d "+args.genome+" -D ./gmapdb "+args.genome, shell=True)
 
 genomehash = dict()
+genomeinfo = dict()
 
 for record in SeqIO.parse(args.genome, 'fasta'):
     genomehash[record.name] = record.seq
+    count = 0
+    for m in re.finditer("N"*500, str(record.seq)):
+        count += 1
+    genomeinfo[record.name] = count + 1
 
 transhash = dict()
 
 for record in SeqIO.parse(args.transcripts, 'fasta'):
     transhash[record.name] = record.seq
 
-subprocess.call("gmap -d "+args.genome+" -D ./gmapdb -f 2 -z sense_force "+args.transcripts+" > "+args.gff3, shell=True)
+subprocess.call("gmap -d "+args.genome+" -D ./gmapdb -f 2 -z sense_force -t 10 "+args.transcripts+" > "+args.gff3, shell=True)
 
 gene = ""
 path = ""
@@ -127,7 +133,7 @@ with open(args.summary, 'w') as ins:
         names = i.split("@")
         ins.write(resdict[i]['genome']+"\t")
         ins.write("\t".join(names)+"\t")
-        ins.write("%s\t%s\t%s\t" % (len(transhash[names[0]]), len(genomehash[resdict[i]['genome']]), len(genomehash[resdict[i]['genome']]) - (500 * ((resdict[i]['exons'] - 1) - resdict[i]['introns_bridged']))))
+        ins.write("%s\t%s\t%s\t" % (len(transhash[names[0]]), len(genomehash[resdict[i]['genome']]), len(genomehash[resdict[i]['genome']]) - (500 * genomeinfo[resdict[i]['genome']])))
         ins.write("%s\t%s\t%s\t%s\t%s\t" % (resdict[i]['exons'], resdict[i]['5prime'], resdict[i]['3prime'], resdict[i]['bp_notmapped_int'], resdict[i]['bp_notmapped_ext']))
         if resdict[i]['exons'] > 1:
             introns = resdict[i]['introns']
