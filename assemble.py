@@ -299,14 +299,18 @@ def final_process (args, i, ID):
         finallogout.write(l+"\n")
         data = l.split("\t")
         if data[0] == ID:
-            if (int(data[8]) > int(data[9])):
-                #print "Reverse"
-                revcom[data[1]] = 1
+            if data[1] not in revcom:
+                if (int(data[8]) > int(data[9])):
+                    #print "Reverse"
+                    revcom[data[1]] = -1
+                else:
+                    revcom[data[1]] = 1
 
     for seqid in revcom:
-        #print "Reversing "+seqid
-        tmpseq = seqhash[seqid]
-        seqhash[seqid] = tmpseq.reverse_complement()
+        if revcom[seqid] == -1:
+            #print "Reversing "+seqid
+            tmpseq = seqhash[seqid]
+            seqhash[seqid] = tmpseq.reverse_complement()
 
     if len(seqhash) == 1:
         finallogout.write("Only one sequence\n")
