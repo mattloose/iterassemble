@@ -748,13 +748,13 @@ if __name__ == "__main__":
                 final[ID] = 0
             else:
                 f = glob.glob(ID+"_files/*_cap3_pass.fasta")
-                print f
+                #print f
                 alliters = []
                 for fil in f:
                     it = int(fil[len(ID)+11:-16])
                     alliters.append(it)
                 alliters.sort()
-                print alliters
+                #print alliters
                 if len(alliters) > 1:
                     penultimate = alliters[-2]
                 else:
