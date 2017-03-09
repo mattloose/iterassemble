@@ -748,11 +748,18 @@ if __name__ == "__main__":
                 final[ID] = 0
             else:
                 f = glob.glob(ID+"_files/*_cap3_pass.fasta")
-                if len(f) > 1:
-                    penultimate = f[-2]
+                print f
+                alliters = []
+                for fil in f:
+                    it = int(fil[len(ID)+11:-16])
+                    alliters.append(it)
+                alliters.sort()
+                print alliters
+                if len(alliters) > 1:
+                    penultimate = alliters[-2]
                 else:
-                    penultimate = f[0]
-                final[ID] = int(penultimate[len(ID)+11:-16])
+                    penultimate = alliters[0]
+                final[ID] = penultimate
     else:
 
         logfile = "iterassemble.log"
