@@ -17,14 +17,16 @@ import bisect
 def load_ids(file):
 
     idlist = []
-    with open(file,'r') as ins:
-        for line in ins:
-            if re.match(">", line):
-                line = re.sub("^>","",line)
-                line = re.sub("\s.*$","",line)
-                idlist.append(line)
+    for record in SeqIO.parse(file, 'fasta'):
+        idlist.append(record.name)
+        dir = record.name + "_files"
+        if not os.path.exists(dir):
+            subprocess.call('mkdir '+dir, shell=True)
+        with open(dir+"/transcript.fasta", 'w') as ins:
+            ins.write(">"+record.name+"\n")
+            ins.write(str(record.seq)+"\n")
+        ins.close()
 
-    ins.close()
     return idlist
 
 
@@ -36,6 +38,8 @@ def assemble (i, id, arr1, args, upf1, upf2):
     f1 = dir + "/iter" + str(i) + "_R1.fastq"
     f2 = dir + "/iter" + str(i) + "_R2.fastq"
     fids = dir + "/iter" + str(i) + "_ids.txt"
+
+    transcript = dir + "/transcript.fasta"
 
     with open(fids, 'w') as ins:
         ins.write("\n".join(arr1))
@@ -97,7 +101,7 @@ def assemble (i, id, arr1, args, upf1, upf2):
     keepseq = []
 
     subprocess.call('makeblastdb -in '+cap3+' -dbtype nucl -parse_seqids', shell=True)
-    p1 = subprocess.Popen('blastn -db '+cap3+' -query '+args.cDNA+' -outfmt 6 -culling_limit '+str(args.culling),shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    p1 = subprocess.Popen('blastn -db '+cap3+' -query '+transcript+' -outfmt 6 -culling_limit '+str(args.culling),shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
         data = l.split("\t")
@@ -136,34 +140,147 @@ def final_process (args, i, ID):
     finallog = dir + "/final.log"
     finallogout = open(finallog, "w")
 
+    transcript = dir + "/transcript.fasta"
+
     infile = dir +"/iter" + str(i) + "_cap3_pass.fasta"
-    scaffile = dir +"/iter" + str(i) + "_cap3_pass.scaffolds.fasta"
+#    scaffile = dir +"/iter" + str(i) + "_cap3_pass.scaffolds.fasta"
     allr1 = dir + "/allR1.fastq"
     allr2 = dir + "/allR2.fastq"
     subprocess.call("cat "+dir+"/*_R1.fastq > "+allr1, shell=True)
     subprocess.call("cat "+dir+"/*_R2.fastq > "+allr2, shell=True)
     subprocess.call("rmPairedDuplicates.py "+allr1+" "+allr2, shell=True)
-    bam = dir + "/iter"+str(i)+"_cap3_pass.bam"
-    subprocess.call("bwa index "+infile+"; bwa mem "+infile+" "+allr1+"_rmDup "+allr2+"_rmDup | samtools view -b -F 2048 - > "+bam, shell=True)
-    subprocess.call("sga-bam2de.pl -n 5 --prefix "+dir+"/sgascaf "+bam, shell=True)
-    #subprocess.call("sga-astat.py "+bam+" > "+dir+"/sgascaf.astat", shell=True)
-    #subprocess.call("sga scaffold -m 200 --pe "+dir+"/sgascaf.de -a "+dir+"/sgascaf.astat -o "+dir+"/sgascaf.scaf "+infile, shell=True)
-    subprocess.call("sga scaffold -m 200 --pe "+dir+"/sgascaf.de -o "+dir+"/sgascaf.scaf "+infile, shell=True)
-    subprocess.call("sga scaffold2fasta -o "+scaffile+" -f "+infile+" "+dir+"/sgascaf.scaf", shell=True)
 
-    passfile = dir +"/iter" + str(i) + "_cap3_pass.scaffolds.fasta.renamed"
-
-    if not os.path.exists(scaffile):
-        subprocess.call("cp "+infile+" "+scaffile, shell=True)
+    passfile1 = dir +"/iter" + str(i) + "_cap3_pass.fasta.renamed"
 
     sc = 0
-    with open(passfile, 'w') as ins:
-        for record in SeqIO.parse(scaffile, "fasta"):
+    startseqhash = dict()
+    with open(passfile1, 'w') as ins:
+        for record in SeqIO.parse(infile, "fasta"):
             if i >= 10 and len(str(record.seq)) <= args.remove:
                 continue
             sc += 1
             ins.write(">Contig"+str(sc)+"\n"+str(record.seq)+"\n")
+            startseqhash["Contig"+str(sc)] = record.seq
+
     ins.close()
+
+    ## Add section that checks for chimeric contigs
+
+    passfile = dir +"/iter" + str(i) + "_cap3_pass.fasta.renamed.nonchimeric"
+    nonchiout = open(passfile, 'w')
+
+    chires = dict()
+    problems = []
+    subprocess.call("makeblastdb -dbtype nucl -in "+passfile1, shell=True)
+    p1 = subprocess.Popen('blastn -db '+passfile1+' -query '+transcript+' -outfmt 6 ',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    for l in iter(p1.stdout.readline,''):
+        l = l.rstrip()
+        finallogout.write(l+"\n")
+        data = l.split("\t")
+        if data[1] not in chires:
+            chires[data[1]] = dict()
+            chires[data[1]]['st'] = []
+            chires[data[1]]['en'] = []
+        chires[data[1]]['st'].append(data[6])
+        chires[data[1]]['en'].append(data[7])
+    for c in chires:
+        if len(chires[c]['st']) > 1:
+            finallogout.write(c+"\n")
+            for a in range(len(chires[c]['st'])):
+                finallogout.write(str(a)+"\t"+chires[c]['st'][a] + "\t" + chires[c]['en'][a]+"\n")
+                good = 0
+                for b in range(len(chires[c]['st'])):
+                    if b == a:
+                        continue
+                    if int(chires[c]['st'][a]) <= int(chires[c]['en'][b]) + 20 and int(chires[c]['st'][a]) >= int(chires[c]['en'][b]) - 20:
+                        good += 1
+                    if int(chires[c]['en'][a]) <= int(chires[c]['st'][b]) + 20 and int(chires[c]['en'][a]) >= int(chires[c]['st'][b]) - 20:
+                        good += 1
+                if good == 0:
+                    finallogout.write("PROBLEMATIC\n")
+                    if c not in problems:
+                        problems.append(c)
+    for c in problems:
+        contigtempfile = dir + "/contig.temp.fasta"
+        contigtempsam = dir +  "/contig.temp.sam"
+        with open(contigtempfile, 'w') as ins:
+            ins.write(">"+c+"\n")
+            ins.write(str(startseqhash[c])+"\n")
+        ins.close()
+        subprocess.call('bwa index '+contigtempfile+'; bwa mem '+contigtempfile+' '+allr1+"_rmDup "+allr2+"_rmDup > "+contigtempsam, shell=True)
+        contigtempperfect = dir + "/contig.temp.perfect.sam"
+        subprocess.call('samtools view -H '+contigtempsam+' > '+contigtempperfect, shell=True)
+        subprocess.call('samtools view -F 12 '+contigtempsam+' | grep "[[:space:]]100M[[:space:]]" | grep "MD:Z:100" >> '+contigtempperfect, shell=True)
+        contigtempbam = dir + "/contig.temp.perfect.bam"
+        subprocess.call("samtools sort -n -o "+contigtempbam+" "+contigtempperfect, shell=True)
+        contigtempdepth = dir + "/contig.temp.perfect.depth.txt"
+        with open(dir + "/chrom.sizes", 'w') as ins:
+            ins.write(c+"\t"+str(len(str(startseqhash[c])))+"\n")
+        ins.close()
+        subprocess.call('bedtools bamtobed -i '+contigtempbam+' -bedpe | cut -f 1,2,6 | sort -k1,1 | bedtools genomecov -i - -g '+dir+'/chrom.sizes -d > '+contigtempdepth, shell=True)
+        regions = dict()
+        with open(contigtempdepth, 'r') as ins:
+            p = -5
+            b = 0
+            for l in ins:
+                l = l.rstrip()
+                data = l.split("\t")
+                if int(data[2]) == 0:
+                    finallogout.write(l+'\n')
+                    if int(data[1]) == p + 1:
+                        p += 1
+                    else:
+                        if b in regions:
+                            regions[b]['end'] = p
+                        b += 1
+                        if b not in regions:
+                            regions[b] = dict()
+                            regions[b]['start'] = int(data[1])
+                        p = int(data[1])
+            if b in regions:
+                regions[b]['end'] = p
+        finallogout.write(str(regions)+"\n")
+        partcount = 0
+        lastb = 0
+        for b in regions:
+            finallogout.write(str(b)+"\n")
+            if regions[b]['start'] == 1 or regions[b]['end'] == len(str(startseqhash[c])):
+                finallogout.write("At start/end\n")
+            else:
+                partcount += 1
+                prev = 1
+                if b > 1 and regions[b-1]['start'] != 1:
+                    prev = regions[b-1]['end']
+                newchunk = str(startseqhash[c])[prev:regions[b]['start']]
+                finallogout.write("New chunk from "+ str(prev)+ " - "+str(regions[b]['start'])+"\n")
+                nonchiout.write(">"+c+"_"+str(partcount)+"\n"+newchunk+"\n")
+                lastb = b
+        if partcount > 0:
+            partcount += 1
+            newchunk = str(startseqhash[c])[regions[lastb]['end']:len(startseqhash[c])]
+            finallogout.write("New chunk from "+ str(regions[lastb]['end'])+ " - "+str(len(startseqhash[c]))+"\n")
+            nonchiout.write(">"+c+"_"+str(partcount)+"\n"+newchunk+"\n")
+        else:
+            nonchiout.write(">"+c+"\n"+str(startseqhash[c])+"\n")
+
+    for c in startseqhash:
+        if c in problems:
+            continue
+        nonchiout.write(">"+c+"\n"+str(startseqhash[c])+"\n")
+
+    nonchiout.close()
+
+    # bam = dir + "/iter"+str(i)+"_cap3_pass.bam"
+    # subprocess.call("bwa index "+infile+"; bwa mem "+infile+" "+allr1+"_rmDup "+allr2+"_rmDup | samtools view -b -F 2048 - > "+bam, shell=True)
+    # subprocess.call("sga-bam2de.pl -n 5 --prefix "+dir+"/sgascaf "+bam, shell=True)
+    # #subprocess.call("sga-astat.py "+bam+" > "+dir+"/sgascaf.astat", shell=True)
+    # #subprocess.call("sga scaffold -m 200 --pe "+dir+"/sgascaf.de -a "+dir+"/sgascaf.astat -o "+dir+"/sgascaf.scaf "+infile, shell=True)
+    # subprocess.call("sga scaffold -m 200 --pe "+dir+"/sgascaf.de -o "+dir+"/sgascaf.scaf "+infile, shell=True)
+    # subprocess.call("sga scaffold2fasta -o "+scaffile+" -f "+infile+" "+dir+"/sgascaf.scaf", shell=True)
+
+    # if not os.path.exists(scaffile):
+    #     subprocess.call("cp "+infile+" "+scaffile, shell=True)
+
 
     midfile = dir + "/final_all_seq.fasta"
 
@@ -176,20 +293,24 @@ def final_process (args, i, ID):
     subprocess.call("makeblastdb -dbtype nucl -in "+passfile, shell=True)
 
     revcom = dict()
-    p1 = subprocess.Popen('blastn -db '+passfile+' -query '+args.cDNA+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    p1 = subprocess.Popen('blastn -db '+passfile+' -query '+transcript+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
         finallogout.write(l+"\n")
         data = l.split("\t")
         if data[0] == ID:
-            if (int(data[8]) > int(data[9])):
-                #print "Reverse"
-                revcom[data[1]] = 1
+            if data[1] not in revcom:
+                if (int(data[8]) > int(data[9])):
+                    #print "Reverse"
+                    revcom[data[1]] = -1
+                else:
+                    revcom[data[1]] = 1
 
     for seqid in revcom:
-        #print "Reversing "+seqid
-        tmpseq = seqhash[seqid]
-        seqhash[seqid] = tmpseq.reverse_complement()
+        if revcom[seqid] == -1:
+            #print "Reversing "+seqid
+            tmpseq = seqhash[seqid]
+            seqhash[seqid] = tmpseq.reverse_complement()
 
     if len(seqhash) == 1:
         finallogout.write("Only one sequence\n")
@@ -398,8 +519,11 @@ def final_process (args, i, ID):
     tmpfile2 = dir+"/blasttmp2.fa"
     subprocess.call("makeblastdb -dbtype nucl -in "+midfile, shell=True)
 
+
+    ### Modify this section to spot contigs which map multiple 'exons' out of sync. Select the longest exon?
+
     orderdict = dict()
-    p1 = subprocess.Popen('blastn -db '+midfile+' -query '+args.cDNA+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+    p1 = subprocess.Popen('blastn -db '+midfile+' -query '+transcript+' -outfmt 6',shell=True,universal_newlines = True, stdout=subprocess.PIPE)
     for l in iter(p1.stdout.readline,''):
         l = l.rstrip()
         finallogout.write(l+"\n")
@@ -624,11 +748,18 @@ if __name__ == "__main__":
                 final[ID] = 0
             else:
                 f = glob.glob(ID+"_files/*_cap3_pass.fasta")
-                if len(f) > 1:
-                    penultimate = f[-2]
+                #print f
+                alliters = []
+                for fil in f:
+                    it = int(fil[len(ID)+11:-16])
+                    alliters.append(it)
+                alliters.sort()
+                #print alliters
+                if len(alliters) > 1:
+                    penultimate = alliters[-2]
                 else:
-                    penultimate = f[0]
-                final[ID] = int(penultimate[len(ID)+11:-16])
+                    penultimate = alliters[0]
+                final[ID] = penultimate
     else:
 
         logfile = "iterassemble.log"
