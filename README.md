@@ -5,6 +5,9 @@ VGW is an iterative assembler that will locally assemble genome reads based on e
 #### 1. Conda (OSX and Linux)
   
   Download pre-requisits fermi-lite and SGA
+  ```
+  conda install -c bioconda -c auto -c biobuilds --file conda_install.txt
+  ```
   
 #### 2. Docker (All platforms)
 
