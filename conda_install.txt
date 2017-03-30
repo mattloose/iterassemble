@@ -1,6 +1,7 @@
 # This file may be used to create an environment using:
 # $ conda create --name <env> --file <this file>
 # platform: osx-64
+abyss=2.0.1=boost1.60_1
 bamtools=2.4.0=3
 biopython=1.68=np112py27_0
 blast=2.6.0=boost1.61_0
@@ -25,6 +26,7 @@ mpfr=3.1.5=0
 multiprocessing=2.6.2.1=py27_0
 numpy=1.12.1=py27_0
 openssl=1.0.2k=0
+pandoc=1.15.0.6=0
 parallel=20160622=1
 perl-threaded=5.22.0=10
 pip=9.0.1=py27_1
