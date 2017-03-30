@@ -19,7 +19,7 @@ def load_ids(file):
     idlist = []
     for record in SeqIO.parse(file, 'fasta'):
         idlist.append(record.name)
-        dir = record.name + "_files"
+        dir = args.docker_vol + "/" + record.name + "_files"
         if not os.path.exists(dir):
             subprocess.call('mkdir '+dir, shell=True)
         with open(dir+"/transcript.fasta", 'w') as ins:
@@ -31,7 +31,7 @@ def load_ids(file):
 
 
 def assemble (i, id, arr1, args, upf1, upf2):
-    dir = id + "_files"
+    dir = args.docker_vol + "/" + id + "_files"
     if not os.path.exists(dir):
         subprocess.call('mkdir '+dir, shell=True)
 
@@ -134,7 +134,7 @@ def assemble (i, id, arr1, args, upf1, upf2):
     return id
 
 def final_process (args, i, ID):
-    dir = ID + "_files"
+    dir = args.docker_vol + "/" + ID + "_files"
     print dir
 
     finallog = dir + "/final.log"
@@ -709,11 +709,14 @@ if __name__ == "__main__":
     parser.add_argument('--continue_from', nargs='?', metavar='INT', default=0, type=int, help="Continue iterating from this number (default: %(default)s)")
     parser.add_argument('--soap', nargs = '?', default = "SOAPdenovo-63mer", help = "SOAP denovo program to use, must be in path (default: %(default)s)")
     parser.add_argument('--end_process_only', action='store_true', help='No iterative assembly will be performed, just the end process based on existing files (default: %(default)s)')
+    parser.add_argument('--docker_vol', nargs='?', default = "/data", help="Shared volume with host for input and output files (default: %(default)s)")
     args = parser.parse_args()
 
     pool = mp.Pool(processes=args.t)
 
     ref = args.cDNA
+
+    args.d = args.docker_vol + "/" + args.d
 
     subprocess.call('bwa index '+args.cDNA, shell=True)
 
@@ -742,12 +745,12 @@ if __name__ == "__main__":
     if args.end_process_only:
         print "Will look at pre-existing files"
         for ID in ids:
-            if os.path.exists(ID + "_files/iter" + str(args.m) + "_cap3_pass.fasta"):
+            if os.path.exists(args.docker_vol + "/" + ID + "_files/iter" + str(args.m) + "_cap3_pass.fasta"):
                 final[ID] = args.m
-            elif not os.path.exists(ID+"_files/iter1_cap3_pass.fasta") or os.path.getsize(ID+"_files/iter1_cap3_pass.fasta") == 0:
+            elif not os.path.exists(args.docker_vol + "/" + ID+"_files/iter1_cap3_pass.fasta") or os.path.getsize(args.docker_vol + "/" + ID+"_files/iter1_cap3_pass.fasta") == 0:
                 final[ID] = 0
             else:
-                f = glob.glob(ID+"_files/*_cap3_pass.fasta")
+                f = glob.glob(args.docker_vol + "/" + ID+"_files/*_cap3_pass.fasta")
                 #print f
                 alliters = []
                 for fil in f:
@@ -762,18 +765,18 @@ if __name__ == "__main__":
                 final[ID] = penultimate
     else:
 
-        logfile = "iterassemble.log"
+        logfile = args.docker_vol + "/" + "iterassemble.log"
         logout = open(logfile, 'w')
         logout.write("Iter\tID\tContig no.\tMax contig length\tTotal length\tStatus\n")
 
         if args.continue_from > 0:
-            ref = "iter" + str(args.continue_from+1) + "_ref.fasta"
+            ref = args.docker_vol + "/" + "iter" + str(args.continue_from+1) + "_ref.fasta"
 
         for i in range(args.continue_from + 1, args.m + 1):
 
             seqhash = dict()
             refseq = ''
-            idsfile = "iter"+str(i)+"_ids.txt"
+            idsfile = args.docker_vol + "/" + "iter"+str(i)+"_ids.txt"
             iout = open(idsfile, 'w')
 
             p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq.gz | sed \'s/\.gz$//\' | parallel -k -j '+str(args.t)+' bwa fastmap -l '+ (str(args.fastmap1) if i == 1 else str(args.fastmap)) +' {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
@@ -798,8 +801,8 @@ if __name__ == "__main__":
 
             iout.close()
 
-            f1 = "iter"+str(i)+"_R1.fastq"
-            f2 = "iter"+str(i)+"_R2.fastq"
+            f1 = args.docker_vol + "/" + "iter"+str(i)+"_R1.fastq"
+            f2 = args.docker_vol + "/" + "iter"+str(i)+"_R2.fastq"
             ex1 = subprocess.Popen("ls "+args.d+"/*_R1.fastq.gz | parallel -k -j 1 'gzip -dc {} | fqextract "+idsfile+"' > "+f1, shell=True)
             subprocess.call("ls "+args.d+"/*_R2.fastq.gz | parallel -k -j 1 'gzip -dc {} | fqextract "+idsfile+"' > "+f2, shell=True)
             ex1.wait()
@@ -818,8 +821,8 @@ if __name__ == "__main__":
                 seqsum = 0
                 maxseq = 0
                 seqcount = 0
-                if os.path.exists(ID + "_files/iter" + str(i) + "_cap3_pass.fasta"):
-                    for record in SeqIO.parse(ID + "_files/iter" + str(i) + "_cap3_pass.fasta", "fasta"):
+                if os.path.exists(args.docker_vol + "/" + ID + "_files/iter" + str(i) + "_cap3_pass.fasta"):
+                    for record in SeqIO.parse(args.docker_vol + "/" + ID + "_files/iter" + str(i) + "_cap3_pass.fasta", "fasta"):
                         seqcount += 1
                         seqsum += len(str(record.seq))
                         if len(str(record.seq)) > maxseq:
@@ -849,7 +852,7 @@ if __name__ == "__main__":
                 last[ID]['count'] = seqcount
 
 
-            ref = "iter" + str(i+1) + "_ref.fasta"
+            ref = args.docker_vol + "/" + "iter" + str(i+1) + "_ref.fasta"
             with open(ref, 'w') as ins:
                 for id in new:
                     if id not in final:
@@ -883,12 +886,12 @@ if __name__ == "__main__":
     finaloutput = [p.get() for p in finalres]
 
 
-    finalfa = "Final_sequences.fasta"
+    finalfa = args.docker_vol + "/" + "Final_sequences.fasta"
     # if os.path.exists(finalfa):
     #     subprocess.call("rm "+finalfa, shell=True)
     # for ID in ids:
         #if ID in final:
-    subprocess.call("cat *_files/final_one_seq.fasta > "+finalfa, shell=True)
+    subprocess.call("cat " + args.docker_vol + "/" + "*_files/final_one_seq.fasta > "+finalfa, shell=True)
         #else:
         #    subprocess.call("cat "+ID+"_files/iter"+str(args.m)+"_cap3_pass.fasta | sed 's/^>/>"+ID+"_/' >> "+finalfa, shell=True)
 
