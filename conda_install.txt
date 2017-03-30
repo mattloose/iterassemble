@@ -1,6 +1,7 @@
 # This file may be used to create an environment using:
 # $ conda create --name <env> --file <this file>
 # platform: osx-64
+bedtools=2.26.0=0
 biopython=1.68=np112py27_0
 blast=2.6.0=boost1.61_0
 bowtie2=2.2.5=py27_2
