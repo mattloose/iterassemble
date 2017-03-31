@@ -16,18 +16,18 @@ parser.add_argument('--docker_vol', nargs='?', default='/data', help='shared doc
 
 args = parser.parse_args()
 
-args.gff = args.docker_vol + "/" + args.gff
+args.gff3 = args.docker_vol + "/" + args.gff3
 args.summary = args.docker_vol + "/" + args.summary
 
-genomename = args.genome[-len(args.docker_vol):]
+genomename = args.genome[len(args.docker_vol):]
 if genomename.startswith("/"):
-    genomename = genomename[-1:]
+    genomename = genomename[1:]
 
 if not os.path.exists(args.docker_vol+"/gmapdb/"):
     subprocess.call("mkdir "+args.docker_vol+"/gmapdb", shell=True)
     args.overwrite = True
 
-if args.overwrite or not os.path.exists(args.docker_vol+"/gmapdb/"+args.genome):
+if args.overwrite or not os.path.exists(args.docker_vol+"/gmapdb/"+genomename):
     subprocess.call("gmap_build -d "+genomename+" -D "+args.docker_vol+"/gmapdb "+args.genome, shell=True)
 
 genomehash = dict()

@@ -17,9 +17,9 @@ args = parser.parse_args()
 
 args.gff = args.docker_vol + "/" + args.gff
 
-genomename = args.genome[-len(args.docker_vol):]
+genomename = args.genome[len(args.docker_vol):]
 if genomename.startswith("/"):
-    genomename = genomename[-1:]
+    genomename = genomename[1:]
 
 if not os.path.exists(args.docker_vol + "/gmapdb/"):
     subprocess.call("mkdir "+args.docker_vol+"/gmapdb", shell=True)
