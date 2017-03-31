@@ -25,7 +25,7 @@ if not os.path.exists(args.docker_vol + "/gmapdb/"):
     subprocess.call("mkdir "+args.docker_vol+"/gmapdb", shell=True)
     args.overwrite = True
 
-if args.overwrite or not os.path.exists(args.docker_vol +"/gmapdb/"+args.genome):
+if args.overwrite or not os.path.exists(args.docker_vol +"/gmapdb/"+genomename):
     subprocess.call("gmap_build -d "+genomename+" -D "+args.docker_vol+"/gmapdb "+args.genome, shell=True)
 
 gmapres = dict()
