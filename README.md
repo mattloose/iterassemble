@@ -60,6 +60,8 @@ Prior to running VGW there are several dependencies required, which can either b
 ## Running VGW
 
 There are three key programs within VGW, the first (`assemble.py`) is the base program that will map, extend and assemble genome fragments. It requires a fasta file of transcript sequences and two paired-end genome read files. These genome read files must contain identical IDs either prior to a blankspace or '/1' or '/2'. For extremely large genomes we recommend first repeat-depleting the read set by k-mer analysis.
+
+The longest process will likely be the inital parsing and indexing of the genome reads, the results of which will be output to a folder. So long as the vgw is run from the same location with the same sequences this index will not need to be remade.
 ```
 assemble.py -h 
 usage: assemble.py [options] cDNA.fa in1.fq in2.fq
