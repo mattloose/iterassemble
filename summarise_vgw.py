@@ -12,15 +12,23 @@ parser.add_argument('transcripts', help='transcript sequences')
 parser.add_argument('-o','--overwrite', action='store_true', help='overwrite gmap database')
 parser.add_argument('-g','--gff3', nargs='?', default='vgw.gff', help='output gff3 filename, default (%(default)s)')
 parser.add_argument('-s','--summary', nargs='?', default='vgw_summary.txt', help='output file name, default (%(default)s)')
+parser.add_argument('--docker_vol', nargs='?', default='/data', help='shared docker volume, default (%(default)s)')
 
 args = parser.parse_args()
 
-if not os.path.exists("gmapdb/"):
-    subprocess.call("mkdir gmapdb", shell=True)
+args.gff = args.docker_vol + "/" + args.gff
+args.summary = args.docker_vol + "/" + args.summary
+
+genomename = args.genome[-len(args.docker_vol):]
+if genomename.startswith("/"):
+    genomename = genomename[-1:]
+
+if not os.path.exists(args.docker_vol+"/gmapdb/"):
+    subprocess.call("mkdir "+args.docker_vol+"/gmapdb", shell=True)
     args.overwrite = True
 
-if args.overwrite or not os.path.exists("gmapdb/"+args.genome):
-    subprocess.call("gmap_build -d "+args.genome+" -D ./gmapdb "+args.genome, shell=True)
+if args.overwrite or not os.path.exists(args.docker_vol+"/gmapdb/"+args.genome):
+    subprocess.call("gmap_build -d "+genomename+" -D "+args.docker_vol+"/gmapdb "+args.genome, shell=True)
 
 genomehash = dict()
 genomeinfo = dict()
@@ -37,7 +45,7 @@ transhash = dict()
 for record in SeqIO.parse(args.transcripts, 'fasta'):
     transhash[record.name] = record.seq
 
-subprocess.call("gmap -d "+args.genome+" -D ./gmapdb -f 2 -z sense_force -t 10 "+args.transcripts+" > "+args.gff3, shell=True)
+subprocess.call("gmap -d "+genomename+" -D "+args.docker_vol+"/gmapdb -f 2 -z sense_force -t 10 "+args.transcripts+" > "+args.gff3, shell=True)
 
 gene = ""
 path = ""

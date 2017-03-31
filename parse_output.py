@@ -11,19 +11,26 @@ parser.add_argument('genome', help='vgw output file')
 parser.add_argument('transcripts', help='transcript sequences')
 parser.add_argument('-o','--overwrite', action='store_true', help='overwrite gmap database')
 parser.add_argument('-g','--gff', nargs='?', default='parsing.gff', help='intermediate gff filename, default (%(default)s)')
+parser.add_argument('--docker_vol', nargs='?', default='/data', help='shared docker volume, default (%(default)s)')
 
 args = parser.parse_args()
 
-if not os.path.exists("gmapdb/"):
-    subprocess.call("mkdir gmapdb", shell=True)
+args.gff = args.docker_vol + "/" + args.gff
+
+genomename = args.genome[-len(args.docker_vol):]
+if genomename.startswith("/"):
+    genomename = genomename[-1:]
+
+if not os.path.exists(args.docker_vol + "/gmapdb/"):
+    subprocess.call("mkdir "+args.docker_vol+"/gmapdb", shell=True)
     args.overwrite = True
 
-if args.overwrite or not os.path.exists("gmapdb/"+args.genome):
-    subprocess.call("gmap_build -d "+args.genome+" -D ./gmapdb "+args.genome, shell=True)
+if args.overwrite or not os.path.exists(args.docker_vol +"/gmapdb/"+args.genome):
+    subprocess.call("gmap_build -d "+genomename+" -D "+args.docker_vol+"/gmapdb "+args.genome, shell=True)
 
 gmapres = dict()
 
-subprocess.call("gmap -d "+args.genome+" -D ./gmapdb -f 3 "+args.transcripts+" > "+args.gff, shell=True)
+subprocess.call("gmap -d "+genomename+" -D "+args.docker_vol+"/gmapdb -f 3 "+args.transcripts+" > "+args.gff, shell=True)
 
 with open(args.gff, 'r') as ins:
     for l in ins:
