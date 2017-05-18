@@ -582,15 +582,13 @@ def final_process (args, i, ID):
             l = l.rstrip()
             finallogout.write(l+"\n")
             data = l.split("\t")
-            if (int(data[7]) >= len(str(keep[order[a]])) - 500):
-                isgood += 1
-            if (int(data[8]) <= 500):
+            if int(data[7]) >= len(str(keep[order[a]])) - 500 and int(data[8]) <= 500:
                 isgood += 1
             if (int(data[6]) < smin):
                 smin = int(data[6])-1
             if (int(data[9]) > smax):
                 smax = int(data[9])
-        if (isgood >= 2):
+        if (isgood >= 1):
             overlap = []
             finallogout.write("this is a good overlap, min: "+str(smin)+" max: "+str(smax)+"\n")
             tmpseq = keep[order[a]]
