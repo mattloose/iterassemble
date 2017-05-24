@@ -582,15 +582,13 @@ def final_process (args, i, ID):
             l = l.rstrip()
             finallogout.write(l+"\n")
             data = l.split("\t")
-            if (int(data[7]) >= len(str(keep[order[a]])) - 500):
-                isgood += 1
-            if (int(data[8]) <= 500):
+            if int(data[7]) >= len(str(keep[order[a]])) - 500 and int(data[8]) <= 500:
                 isgood += 1
             if (int(data[6]) < smin):
                 smin = int(data[6])-1
             if (int(data[9]) > smax):
                 smax = int(data[9])
-        if (isgood >= 2):
+        if (isgood >= 1):
             overlap = []
             finallogout.write("this is a good overlap, min: "+str(smin)+" max: "+str(smax)+"\n")
             tmpseq = keep[order[a]]
@@ -678,7 +676,8 @@ def split_index (args):
         subprocess.call("ls "+args.d+"/seq??? | awk '{system(\"mv \" $0 \" \" $0 \"_R2.fastq\")}'", shell=True)
 
     subprocess.call('ls '+args.d+'/seq*.fastq | parallel -j '+str(args.t)+' bwa index {}', shell=True)
-    subprocess.call('ls '+args.d+'/seq*.fastq | parallel -j '+str(args.t)+' gzip {}', shell=True)
+    if args.gzip:
+        subprocess.call('ls '+args.d+'/seq*.fastq | parallel -j '+str(args.t)+' gzip {}', shell=True)
     #subprocess.call("ls "+args.d+"/seq*_R1.fastq | parallel -k --tag head -n 1 {} | awk '{print $2 \"\t\" $1}' | sed 's/^@//' | sed 's/_R1.fastq$//' > "+args.d+"/fq_to_file.txt", shell=True)
     with open(args.d+"/info.txt", 'w') as ins:
         ins.write(args.read1 + "\t" + args.read2)
@@ -710,6 +709,7 @@ if __name__ == "__main__":
     parser.add_argument('--soap', nargs = '?', default = "SOAPdenovo-63mer", help = "SOAP denovo program to use, must be in path (default: %(default)s)")
     parser.add_argument('--end_process_only', action='store_true', help='No iterative assembly will be performed, just the end process based on existing files (default: %(default)s)')
     parser.add_argument('--docker_vol', nargs='?', default = "/data", help="Shared volume with host for input and output files (default: %(default)s)")
+    parser.add_argument('--gzip', action='store_true', help='To converse disk space the split fastq files will be gzipped, will affect running speed (default: %(default)s)')
     args = parser.parse_args()
 
     pool = mp.Pool(processes=args.t)
@@ -779,7 +779,7 @@ if __name__ == "__main__":
             idsfile = args.docker_vol + "/" + "iter"+str(i)+"_ids.txt"
             iout = open(idsfile, 'w')
 
-            p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq.gz | sed \'s/\.gz$//\' | parallel -k -j '+str(args.t)+' bwa fastmap -l '+ (str(args.fastmap1) if i == 1 else str(args.fastmap)) +' {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
+            p1 = subprocess.Popen('ls '+args.d+'/seq*.fastq'+('.gz  | sed \'s/\.gz$//\' ' if args.gzip else ' ') +' | parallel -k -j '+str(args.t)+' bwa fastmap -l '+ (str(args.fastmap1) if i == 1 else str(args.fastmap)) +' {} '+ref,shell=True,universal_newlines = True, stdout=subprocess.PIPE)
 
             for l in iter(p1.stdout.readline,''):
                 l = l.rstrip()
@@ -803,9 +803,14 @@ if __name__ == "__main__":
 
             f1 = args.docker_vol + "/" + "iter"+str(i)+"_R1.fastq"
             f2 = args.docker_vol + "/" + "iter"+str(i)+"_R2.fastq"
-            ex1 = subprocess.Popen("ls "+args.d+"/*_R1.fastq.gz | parallel -k -j 1 'gzip -dc {} | fqextract "+idsfile+"' > "+f1, shell=True)
-            subprocess.call("ls "+args.d+"/*_R2.fastq.gz | parallel -k -j 1 'gzip -dc {} | fqextract "+idsfile+"' > "+f2, shell=True)
-            ex1.wait()
+            if args.gzip :
+                ex1 = subprocess.Popen("gzip -dc "+args.d+"/*_R1.fastq.gz | fqextract "+idsfile+" > "+f1, shell=True)
+                subprocess.call("gzip -dc "+args.d+"/*_R2.fastq.gz | fqextract "+idsfile+" > "+f2, shell=True)
+                ex1.wait()
+            else:
+                ex1 = subprocess.Popen("cat "+args.d+"/*_R1.fastq | fqextract "+idsfile+" > "+f1, shell=True)
+                subprocess.call("cat "+args.d+"/*_R2.fastq | fqextract "+idsfile+" > "+f2, shell=True)
+                ex1.wait()
 
             new = dict()
 
