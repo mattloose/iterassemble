@@ -801,12 +801,12 @@ if __name__ == "__main__":
             f1 = "iter"+str(i)+"_R1.fastq"
             f2 = "iter"+str(i)+"_R2.fastq"
             if args.gzip :
-                ex1 = subprocess.Popen("ls "+args.d+"/*_R1.fastq.gz | parallel -k -j 1 'gzip -dc {} | fqextract "+idsfile+"' > "+f1, shell=True)
-                subprocess.call("ls "+args.d+"/*_R2.fastq.gz | parallel -k -j 1 'gzip -dc {} | fqextract "+idsfile+"' > "+f2, shell=True)
+                ex1 = subprocess.Popen("gzip -dc "+args.d+"/*_R1.fastq.gz | fqextract "+idsfile+" > "+f1, shell=True)
+                subprocess.call("gzip -dc "+args.d+"/*_R2.fastq.gz | fqextract "+idsfile+" > "+f2, shell=True)
                 ex1.wait()
             else:
-                ex1 = subprocess.Popen("ls "+args.d+"/*_R1.fastq | parallel -k -j 1 'cat {} | fqextract "+idsfile+"' > "+f1, shell=True)
-                subprocess.call("ls "+args.d+"/*_R2.fastq | parallel -k -j 1 'cat {} | fqextract "+idsfile+"' > "+f2, shell=True)
+                ex1 = subprocess.Popen("cat "+args.d+"/*_R1.fastq | fqextract "+idsfile+" > "+f1, shell=True)
+                subprocess.call("cat "+args.d+"/*_R2.fastq | fqextract "+idsfile+" > "+f2, shell=True)
                 ex1.wait()
 
             new = dict()
