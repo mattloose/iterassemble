@@ -56,8 +56,8 @@ def assemble (i, id, arr1, args, upf1, upf2):
     #         filelist.append(fidx[1][x])
     # print filelist
 
-    subprocess.call("cat "+upf1+" | fqextract "+fids+" > "+f1, shell=True)
-    subprocess.call("cat "+upf2+" | fqextract "+fids+" > "+f2, shell=True)
+    subprocess.call("cat "+upf1+" | fqparse "+fids+" > "+f1, shell=True)
+    subprocess.call("cat "+upf2+" | fqparse "+fids+" > "+f2, shell=True)
 
     conf = dir + "/conf.txt"
     with open(conf, 'w') as ins:
@@ -791,22 +791,22 @@ if __name__ == "__main__":
                             continue
                         id = re.sub(":[-+]\d+$","",id)
                         id = re.sub("/\d$","",id)
-                        iout.write(id+"\n")
+                        iout.write("@"+id+"\n")
                         if refseq not in seqhash:
                             seqhash[refseq] = []
-                        seqhash[refseq].append(id)
+                        seqhash[refseq].append("@"+id)
 
             iout.close()
 
             f1 = "iter"+str(i)+"_R1.fastq"
             f2 = "iter"+str(i)+"_R2.fastq"
             if args.gzip :
-                ex1 = subprocess.Popen("gzip -dc "+args.d+"/*_R1.fastq.gz | fqextract "+idsfile+" > "+f1, shell=True)
-                subprocess.call("gzip -dc "+args.d+"/*_R2.fastq.gz | fqextract "+idsfile+" > "+f2, shell=True)
+                ex1 = subprocess.Popen("gzip -dc "+args.d+"/*_R1.fastq.gz | fqparse "+idsfile+" > "+f1, shell=True)
+                subprocess.call("gzip -dc "+args.d+"/*_R2.fastq.gz | fqparse "+idsfile+" > "+f2, shell=True)
                 ex1.wait()
             else:
-                ex1 = subprocess.Popen("cat "+args.d+"/*_R1.fastq | fqextract "+idsfile+" > "+f1, shell=True)
-                subprocess.call("cat "+args.d+"/*_R2.fastq | fqextract "+idsfile+" > "+f2, shell=True)
+                ex1 = subprocess.Popen("cat "+args.d+"/*_R1.fastq | fqparse "+idsfile+" > "+f1, shell=True)
+                subprocess.call("cat "+args.d+"/*_R2.fastq | fqparse "+idsfile+" > "+f2, shell=True)
                 ex1.wait()
 
             new = dict()
