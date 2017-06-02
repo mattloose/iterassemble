@@ -56,8 +56,8 @@ def assemble (i, id, arr1, args, upf1, upf2):
     #         filelist.append(fidx[1][x])
     # print filelist
 
-    subprocess.call("cat "+upf1+" | fqparse "+fids+" > "+f1, shell=True)
-    subprocess.call("cat "+upf2+" | fqparse "+fids+" > "+f2, shell=True)
+    subprocess.call("cat "+upf1+" | fqextract "+fids+" > "+f1, shell=True)
+    subprocess.call("cat "+upf2+" | fqextract "+fids+" > "+f2, shell=True)
 
     conf = dir + "/conf.txt"
     with open(conf, 'w') as ins:
@@ -794,7 +794,7 @@ if __name__ == "__main__":
                         iout.write("@"+id+"\n")
                         if refseq not in seqhash:
                             seqhash[refseq] = []
-                        seqhash[refseq].append("@"+id)
+                        seqhash[refseq].append(id)
 
             iout.close()
 
