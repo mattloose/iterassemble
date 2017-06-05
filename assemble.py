@@ -794,7 +794,7 @@ if __name__ == "__main__":
                             continue
                         id = re.sub(":[-+]\d+$","",id)
                         id = re.sub("/\d$","",id)
-                        iout.write(id+"\n")
+                        iout.write("@"+id+"\n")
                         if refseq not in seqhash:
                             seqhash[refseq] = []
                         seqhash[refseq].append(id)
@@ -804,12 +804,12 @@ if __name__ == "__main__":
             f1 = args.docker_vol + "/" + "iter"+str(i)+"_R1.fastq"
             f2 = args.docker_vol + "/" + "iter"+str(i)+"_R2.fastq"
             if args.gzip :
-                ex1 = subprocess.Popen("gzip -dc "+args.d+"/*_R1.fastq.gz | fqextract "+idsfile+" > "+f1, shell=True)
-                subprocess.call("gzip -dc "+args.d+"/*_R2.fastq.gz | fqextract "+idsfile+" > "+f2, shell=True)
+                ex1 = subprocess.Popen("gzip -dc "+args.d+"/*_R1.fastq.gz | fqparse "+idsfile+" > "+f1, shell=True)
+                subprocess.call("gzip -dc "+args.d+"/*_R2.fastq.gz | fqparse "+idsfile+" > "+f2, shell=True)
                 ex1.wait()
             else:
-                ex1 = subprocess.Popen("cat "+args.d+"/*_R1.fastq | fqextract "+idsfile+" > "+f1, shell=True)
-                subprocess.call("cat "+args.d+"/*_R2.fastq | fqextract "+idsfile+" > "+f2, shell=True)
+                ex1 = subprocess.Popen("cat "+args.d+"/*_R1.fastq | fqparse "+idsfile+" > "+f1, shell=True)
+                subprocess.call("cat "+args.d+"/*_R2.fastq | fqparse "+idsfile+" > "+f2, shell=True)
                 ex1.wait()
 
             new = dict()

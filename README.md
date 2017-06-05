@@ -19,8 +19,9 @@ To download onto UNIX platforms:
 git clone https://github.com/mattloose/iterassemble
 cd iterassemble/
 make
+sudo make install
 ```
-We then recommend you add the `iterassemble/` directory to the PATH.
+This will install the C/C++ programs, we also recommend you add the `iterassemble/` directory to the PATH.
 
 ## Dependencies 
 
