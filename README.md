@@ -1,9 +1,9 @@
 # Virtual Genome Walking
 VGW is an iterative assembler that will locally assemble genome reads based on existing transcripts. This is designed for hard to assemble genomes where WGS assembly approaches fail.
 
-## Installation
+VGW can either be used in Docker, or can be installed and maintained locally.
 
-#### 1. Docker
+## Docker
 
 The docker image contains all dependencies and can be run on all operating systems. Docker itself may be limited on CPU/MEM usage. To install and run using docker:
 
@@ -11,7 +11,15 @@ The docker image contains all dependencies and can be run on all operating syste
 docker run terievans/docker-vgw 
 ```
 
-#### 2. UNIX
+To mount a local drive that contains your input files and run the three main programs with docker use the following. In this example we are mounting the local drive into `/data` but this could be anything so long as it is consistant. All output files will appear in your local drive. For more information on what these programs do, see below. Note: Your local drive must be accessible by docker! 
+
+```
+docker run -v <local drive>:/data terievans/docker-vgw assemble.py /data/<transcripts.fa> /data/<genome1.fq> /data/<genome2.fq> --docker_vol /data
+docker run -v <local drive>:/data terievans/docker-vgw parse_output.py /data/<VGW output> /data/<transcripts.fa> --docker_vol /data
+docker run -v <local drive>:/data terievans/docker-vgw summarise_vgw.py /data/<parsed VGW output> /data/<transcripts.fa> --docker_vol /data
+```
+
+## UNIX Installation
 
 To download onto UNIX platforms:
 
@@ -21,9 +29,10 @@ cd iterassemble/
 make
 sudo make install
 ```
-This will install the C/C++ programs, we also recommend you add the `iterassemble/` directory to the PATH.
 
-## Dependencies 
+This will install the C/C++ programs, you will also need to add the `iterassemble/` directory to the PATH.
+
+### Dependencies 
 
 Prior to running VGW there are several dependencies required, which can either be installed manually or using conda:
 
