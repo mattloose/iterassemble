@@ -37,7 +37,7 @@ transhash = dict()
 for record in SeqIO.parse(args.transcripts, 'fasta'):
     transhash[record.name] = record.seq
 
-subprocess.call("gmap -d "+args.genome+" -D ./gmapdb -f 2 -z sense_force -t 10 "+args.transcripts+" > "+args.gff3, shell=True)
+subprocess.call("gmap -d "+args.genome+" -D ./gmapdb -t 10 -f 2 -z sense_force -t 10 "+args.transcripts+" > "+args.gff3, shell=True)
 
 gene = ""
 path = ""

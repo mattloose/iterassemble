@@ -23,7 +23,7 @@ if args.overwrite or not os.path.exists("gmapdb/"+args.genome):
 
 gmapres = dict()
 
-subprocess.call("gmap -d "+args.genome+" -D ./gmapdb -f 3 "+args.transcripts+" > "+args.gff, shell=True)
+subprocess.call("gmap -d "+args.genome+" -D ./gmapdb -t 10 -f 3 "+args.transcripts+" > "+args.gff, shell=True)
 
 with open(args.gff, 'r') as ins:
     for l in ins:
