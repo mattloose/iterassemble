@@ -37,7 +37,7 @@ transhash = dict()
 for record in SeqIO.parse(args.transcripts, 'fasta'):
     transhash[record.name] = record.seq
 
-subprocess.call("gmap -d "+args.genome+" -D ./gmapdb -t 10 -f 2 -z sense_force -t 10 "+args.transcripts+" > "+args.gff3, shell=True)
+#subprocess.call("gmap -d "+args.genome+" -D ./gmapdb -f 2 -t 10 "+args.transcripts+" > "+args.gff3, shell=True)
 
 gene = ""
 path = ""
@@ -59,12 +59,17 @@ with open(args.gff3, 'r') as ins:
                 info = last[8].split(";")
                 coords = info[3].split(" ")
                 #print "Genome len: "+str(len(genomehash[gene]))
-                resdict[newid]['3prime'] = len(genomehash[last[0]]) - int(last[4])
+                if last[6] == "-":
+                    resdict[newid]['5prime'] = int(last[3]) - 1
+                else:
+                    resdict[newid]['3prime'] = len(genomehash[last[0]]) - int(last[4])
                 #print "Trans len: "+str(len(transhash[gene]))
-                if coords[3] == "+" and int(coords[2]) < len(transhash[gene]):
+                if coords[3] == "+":
                     extra = len(transhash[gene]) - int(coords[2])
                     #print extra
                     resdict[newid]['bp_notmapped_ext'] += extra
+                else:
+                    resdict[newid]['bp_notmapped_ext'] += (int(coords[1])-1)
                 last = []
             info = data[8].split(";")
             gene = info[1].split("=")[1]
@@ -87,25 +92,44 @@ with open(args.gff3, 'r') as ins:
             resdict[newid]['exons'] += 1
             if 'exon1;' in data[8]:
                 #print "First exon!"
-                resdict[newid]['5prime'] = int(data[3]) - 1
+                if data[6] == "+":
+                    resdict[newid]['5prime'] = int(data[3]) - 1
+                else:
+                    resdict[newid]['3prime'] = len(genomehash[data[0]]) - int(data[4])
                 info = data[8].split(";")
                 coords = info[3].split(" ")
                 if coords[3] == "+":
                     resdict[newid]['bp_notmapped_ext'] += (int(coords[1])-1)
+                else:
+                    resdict[newid]['bp_notmapped_ext'] += (len(transhash[gene]) - int(coords[2]))
             else:
                 previnfo = last[8].split(";")
                 prevcoords = previnfo[3].split(" ")
                 info = data[8].split(";")
                 coords = info[3].split(" ")
                 #print "Trans: %s - %s" % (prevcoords[2], coords[1])
-                if int(prevcoords[2])+1 < int(coords[1]):
-                    extra = int(coords[1]) - int(prevcoords[2]) - 1;
-                    resdict[newid]['bp_notmapped_int'] += extra
+                if coords[3] == "+":
+                    if int(prevcoords[2])+1 < int(coords[1]):
+                        extra = int(coords[1]) - int(prevcoords[2]) - 1;
+                        resdict[newid]['bp_notmapped_int'] += extra
+                else:
+                    if int(prevcoords[1])-1 > int(coords[2]):
+                        extra = int(prevcoords[1]) - int(coords[2]) - 1;
+                        resdict[newid]['bp_notmapped_int'] += extra
+
 
                 #print "Genome: %s - %s" % (last[4], data[3])
-                length = int(data[3]) - int(last[4])
+                length = 0
+                intronseq = ""
+                if data[6] == "+":
+                    length = int(data[3]) - int(last[4])
+                    intronseq = genomehash[data[0]][int(last[4]):int(data[3])]
+                else:
+                    length = int(last[3]) - int(data[4])
+                    intronseq = genomehash[data[0]][int(data[4]):int(last[3])]
+
                 resdict[newid]['introns'].append(length)
-                intronseq = genomehash[data[0]][int(last[4]):int(data[3])]
+
                 #print intronseq
                 if not "N"*500 in intronseq:
                     #print "BRIDGED"
@@ -117,12 +141,18 @@ with open(args.gff3, 'r') as ins:
             info = last[8].split(";")
             coords = info[3].split(" ")
             #print "Genome len: "+str(len(genomehash[gene]))
-            resdict[newid]['3prime'] = len(genomehash[last[0]]) - int(last[4])
+            if last[6] == "-":
+                resdict[newid]['5prime'] = int(last[3]) - 1
+            else:
+                resdict[newid]['3prime'] = len(genomehash[last[0]]) - int(last[4])
             #print "Trans len: "+str(len(transhash[gene]))
-            if coords[3] == "+" and int(coords[2]) < len(transhash[gene]):
+            if coords[3] == "+":
                 extra = len(transhash[gene]) - int(coords[2])
                 #print extra
                 resdict[newid]['bp_notmapped_ext'] += extra
+            else:
+                resdict[newid]['bp_notmapped_ext'] += (int(coords[1])-1)
+
             last = []
 
 ins.close()
