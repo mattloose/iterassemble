@@ -30,7 +30,7 @@ if args.overwrite or not os.path.exists(args.docker_vol +"/gmapdb/"+genomename):
 
 gmapres = dict()
 
-subprocess.call("gmap -d "+genomename+" -D "+args.docker_vol+"/gmapdb -f 3 "+args.transcripts+" > "+args.gff, shell=True)
+subprocess.call("gmap -d "+genomename+" -D "+args.docker_vol+"/gmapdb -t 10 -f 3 "+args.transcripts+" > "+args.gff, shell=True)
 
 with open(args.gff, 'r') as ins:
     for l in ins:

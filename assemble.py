@@ -210,7 +210,7 @@ def final_process (args, i, ID):
         subprocess.call('bwa index '+contigtempfile+'; bwa mem '+contigtempfile+' '+allr1+"_rmDup "+allr2+"_rmDup > "+contigtempsam, shell=True)
         contigtempperfect = dir + "/contig.temp.perfect.sam"
         subprocess.call('samtools view -H '+contigtempsam+' > '+contigtempperfect, shell=True)
-        subprocess.call('samtools view -F 12 '+contigtempsam+' | grep "[[:space:]]100M[[:space:]]" | grep "MD:Z:100" >> '+contigtempperfect, shell=True)
+        subprocess.call('samtools view -F 12 '+contigtempsam+' | grep "[[:space:]]'+str(args.length)+'[[:space:]]" | grep "MD:Z:'+str(args.length)+'" >> '+contigtempperfect, shell=True)
         contigtempbam = dir + "/contig.temp.perfect.bam"
         subprocess.call("samtools sort -n -o "+contigtempbam+" "+contigtempperfect, shell=True)
         contigtempdepth = dir + "/contig.temp.perfect.depth.txt"
@@ -694,7 +694,7 @@ if __name__ == "__main__":
     parser.add_argument('read2', metavar = 'in2.fq', help='FASTQ file of second paired-end reads')
     parser.add_argument('-t', nargs='?', metavar='INT', default=10, type=int, help='Number of processors to use (default: %(default)s)')
     parser.add_argument('-m', nargs='?', metavar='INT', default=50, type=int, help='Maximum number of iterations to make (default: %(default)s)')
-    parser.add_argument('-d', nargs='?', metavar='dir/', default='Split_files/', help='Directory for fastq indexes, will be overwritten (default: %(default)s)')
+    parser.add_argument('-d', nargs='?', metavar='dir/', default='Split_dir/', help='Directory for fastq indexes, will be overwritten (default: %(default)s)')
     parser.add_argument('-i','--insert', nargs='?', metavar='INT', default=200, type=int, help='Average insert size (default: %(default)s)')
     parser.add_argument('-l','--length', nargs='?', metavar='INT', default=100, type=int, help='Maximum read length (default: %(default)s)')
     parser.add_argument('-e','--endsize', nargs='?', metavar='INT', default=600, type=int, help='Number of bases from each end of the contigs to map (default: %(default)s)')
