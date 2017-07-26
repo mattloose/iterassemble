@@ -56,8 +56,6 @@ alldone = []
 
 for genome in reversed(genomeorder):
 
-    # if genome != "ax_528389":
-    #     continue
     print genome
 
     if genome in alldone:
@@ -169,7 +167,6 @@ for genome in reversed(genomeorder):
                         gotit += 1
                         break
                 if gotit == 0:
-                    print "PANIC!"
                     lessgotit = 0
                     for gs, ge in lesshits.iteritems():
                         if s > gs and e < ge:
