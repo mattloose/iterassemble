@@ -24,9 +24,11 @@ parser.add_argument("genome", help="Parsed VGW scaffolds")
 parser.add_argument("gff", help="GFF file with transcript mapped to VGW scaffolds")
 parser.add_argument("transcripts", help="fasta file of transcript sequences")
 parser.add_argument('-o', '--outfile', nargs='?', default = "merged.fasta", help="Outfile name (default %(default)s)")
-
+parser.add_argument('--docker_vol', nargs='?', default='/data', help='shared docker volume, default (%(default)s)')
 
 args = parser.parse_args()
+
+args.outfile = args.docker_vol + "/" + args.outfile
 
 genomeorder = []
 genomelens = dict()
@@ -56,8 +58,6 @@ alldone = []
 
 for genome in reversed(genomeorder):
 
-    # if genome != "ax_528389":
-    #     continue
     print genome
 
     if genome in alldone:
@@ -169,7 +169,6 @@ for genome in reversed(genomeorder):
                         gotit += 1
                         break
                 if gotit == 0:
-                    print "PANIC!"
                     lessgotit = 0
                     for gs, ge in lesshits.iteritems():
                         if s > gs and e < ge:
@@ -195,7 +194,7 @@ for genome in reversed(genomeorder):
             continue
 
 
-        tmpname = "tmpmerge.fa"
+        tmpname = args.docker_vol + "/tmpmerge.fa"
         tmp = open(tmpname, 'w')
         contigs = genomeseq[genome].split("N"*500)
         for c in range(len(contigs)):
