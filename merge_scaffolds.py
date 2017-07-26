@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 # Sort by longest VGW scaffold, then go through vgw.gff looking for other
 # transcripts with a highish coverage that map to overlapping exon positions.
 # Check flanking genome sequence matches, then assemble together with cap3.
@@ -5,6 +7,7 @@
 # information from multiple transcripts
 
 # Requires CAP3, BLAST and MAFFT
+
 
 import os
 import re

@@ -17,6 +17,7 @@ To mount a local drive that contains your input files and run the three main pro
 docker run -v <local drive>:/data terievans/docker-vgw assemble.py /data/<transcripts.fa> /data/<genome1.fq> /data/<genome2.fq> --docker_vol /data
 docker run -v <local drive>:/data terievans/docker-vgw parse_output.py /data/<VGW output> /data/<transcripts.fa> --docker_vol /data
 docker run -v <local drive>:/data terievans/docker-vgw summarise_vgw.py /data/<parsed VGW output> /data/<transcripts.fa> --docker_vol /data
+docker run -v <local drive>:/data terievans/docker-vgw merge_scaffolds.py /data/<parsed VGW output> /data/<GFF file> /data/<transcripts.fa> --docker_vol /data
 ```
 
 ## UNIX Installation
@@ -69,7 +70,7 @@ Prior to running VGW there are several dependencies required, which can either b
 
 ## Running VGW
 
-There are three key programs within VGW, the first (`assemble.py`) is the base program that will map, extend and assemble genome fragments. It requires a fasta file of transcript sequences and two paired-end genome read files. These genome read files must contain identical IDs either prior to a blankspace or '/1' or '/2'. For extremely large genomes we recommend first repeat-depleting the read set by k-mer analysis.
+There are four key programs within VGW, the first (`assemble.py`) is the base program that will map, extend and assemble genome fragments. It requires a fasta file of transcript sequences and two paired-end genome read files. These genome read files must contain identical IDs either prior to a blankspace or '/1' or '/2'. For extremely large genomes we recommend first repeat-depleting the read set by k-mer analysis.
 
 The longest process will likely be the inital parsing and indexing of the genome reads, the results of which will be output to a folder. So long as the vgw is run from the same location with the same sequences this index will not need to be remade.
 
@@ -85,11 +86,18 @@ The second script (`parse_output.py`) will compare the genome walked output (`Fi
 parse_output.py example/Final_sequences.fasta example/Transcript.fa
 ```
 
-The output from this program (`Final_sequences.fasta_gmapparsed`) can then be processed by `summarise_vgw.py` to generate a gff file and assembly metrics. 
+The output from this program (`Final_sequences.fasta_gmapparsed`) can then be processed by `summarise_vgw.py` to generate a GFF file and assembly metrics. 
 
 ```
 summarise_vgw.py example/Final_sequences.fasta_gmapparsed example/Transcript.fa
 ```
+
+Optionally, this GFF file (`vgw.gff`) can be used to merge scaffolds that are derived from the same gene using the `merge_scaffolds.py` script. After running this, you may wish to re-summarise the results by running the previous step on the merged scaffolds.
+
+```
+merge_scaffolds.py example/Final_sequences.fasta_gmapparsed example/vgw.gff example/Transcript.fa
+```
+
 
 ## Acknowledgements
 
