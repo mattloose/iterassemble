@@ -51,7 +51,7 @@ Prior to running VGW there are several dependencies required, which can either b
   
 #### 2. Manual
 
-  Spend a long time downloading and installing the following:
+  If you cannot or do not wish to use conda, then you will have to spend a long time downloading and installing the following:
   * BWA
   * Tophat
   * SOAPdenovo2
@@ -90,3 +90,7 @@ The output from this program (`Final_sequences.fasta_gmapparsed`) can then be pr
 ```
 summarise_vgw.py example/Final_sequences.fasta_gmapparsed example/Transcript.fa
 ```
+
+## Acknowledgements
+
+The authors wish to thank Heng Li and Pierre Lindenbaum for fqextract.c and fqparse.cpp respectively (https://www.biostars.org/p/10353/).  
